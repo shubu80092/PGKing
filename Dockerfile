@@ -7,7 +7,6 @@ COPY ["PGKing.sln", "./"]
 COPY ["PGKing.UI/PGKing.UI.csproj", "PGKing.UI/"]
 COPY ["PGKing.Infrastructure/PGKing.Infrastructure.csproj", "PGKing.Infrastructure/"]
 COPY ["PGKing.Application/PGKing.Application.csproj", "PGKing.Application/"]
-COPY ["PGKing.Domain/PGKing.Domain.csproj", "PGKing.Domain/"]
 
 # Restore dependencies
 RUN dotnet restore
