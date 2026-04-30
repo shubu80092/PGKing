@@ -1,0 +1,122 @@
+@{
+    ViewData["Title"] = "About Us";
+}
+
+<section class="py-5 bg-light">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="pe-lg-5">
+                    <h6 class="text-primary fw-bold text-uppercase mb-3">About PGKing</h6>
+                    <h1 class="display-4 fw-bold mb-4">Your Premier Partner in <span class="text-primary">Perfect Living</span></h1>
+                    <p class="lead text-muted mb-4">
+                        PGKing is dedicated to revolutionizing the way people find and live in shared spaces. Whether you're a student, a working professional, or someone looking for a comfortable home, we provide curated, high-quality PGs and Hostels that feel like home.
+                    </p>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0 fw-bold">Verified Properties</h5>
+                            <p class="mb-0 text-muted small">Every property is physically verified by our team.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0 fw-bold">Safe & Secure</h5>
+                            <p class="mb-0 text-muted small">Top-notch security features in every listed PG.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0 fw-bold">Transparent Pricing</h5>
+                            <p class="mb-0 text-muted small">No hidden charges or brokerage fees.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="position-relative">
+                    <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" class="img-fluid rounded-4 shadow-lg" alt="About PGKing">
+                    <div class="position-absolute bottom-0 start-0 bg-white p-4 rounded-4 shadow-sm m-4 d-none d-md-block">
+                        <div class="d-flex align-items-center">
+                            <div class="display-4 fw-bold text-primary me-3">5+</div>
+                            <div class="text-muted fw-semibold" style="line-height: 1.2;">Years of <br> Experience</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Our Core Values</h2>
+            <p class="text-muted mx-auto" style="max-width: 600px;">The principles that guide us in providing the best living experience for our residents.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 p-4 text-center hover-lift transition-all">
+                    <div class="bg-primary-subtle text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px; font-size: 2rem;">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Empathy</h4>
+                    <p class="text-muted mb-0">We understand the challenges of finding a new home and strive to make it as smooth as possible.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 p-4 text-center hover-lift transition-all">
+                    <div class="bg-primary-subtle text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px; font-size: 2rem;">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Quality</h4>
+                    <p class="text-muted mb-0">We maintain high standards for all our properties to ensure a premium living experience.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 p-4 text-center hover-lift transition-all">
+                    <div class="bg-primary-subtle text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px; font-size: 2rem;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Community</h4>
+                    <p class="text-muted mb-0">We foster a sense of belonging and community among our residents.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-dark text-white">
+    <div class="container py-5">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <h2 class="display-5 fw-bold mb-4">Ready to find your next home?</h2>
+                <p class="lead mb-5 opacity-75">Join thousands of happy residents living in PGKing verified properties across the country.</p>
+                <a asp-controller="Home" asp-action="Properties" class="btn btn-primary btn-lg rounded-pill px-5 py-3 fw-bold">Explore Properties</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .bg-primary-subtle {
+        background-color: rgba(13, 110, 253, 0.1) !important;
+    }
+    .hover-lift:hover {
+        transform: translateY(-10px);
+    }
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+    .rounded-4 {
+        border-radius: 1.5rem !important;
+    }
+</style>
