@@ -1,0 +1,71 @@
+@model IEnumerable<PGKing.Application.Entities.Property>
+@{
+    ViewData["Title"] = "Find Your PG";
+    var cities = ViewBag.Cities as List<PGKing.Application.Entities.City>;
+}
+
+<section class="py-5 bg-light" style="margin-top: 60px;">
+    <div class="container">
+        <div class="row align-items-center mb-5">
+            <div class="col-lg-6">
+                <h1 class="fw-bold mb-0">Discover Premium PGs</h1>
+                <p class="text-muted">Find the best accommodations in your preferred city.</p>
+            </div>
+            <div class="col-lg-6">
+                <form asp-action="Properties" method="get" class="d-flex gap-2">
+                    <select name="cityId" class="form-select rounded-pill px-4 shadow-sm" style="width: 200px;">
+                        <option value="">All Cities</option>
+                        @if (cities != null)
+                        {
+                            foreach (var city in cities)
+                            {
+                                <option value="@city.Id">@city.Name</option>
+                            }
+                        }
+                    </select>
+                    <input type="text" name="search" class="form-control rounded-pill px-4 shadow-sm" placeholder="Search area or name...">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Filter</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var property in Model)
+                {
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="property-card h-100 shadow-sm border-0 rounded-4 overflow-hidden bg-white">
+                            <div class="position-relative" style="height: 220px;">
+                                <img src="@(string.IsNullOrEmpty(property.ImageUrl) ? "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800" : property.ImageUrl)" class="w-100 h-100" style="object-fit: cover;" alt="@property.Title">
+                                <div class="position-absolute top-0 end-0 m-3">
+                                    <span class="badge bg-white text-dark shadow-sm px-3 py-2 rounded-pill"><i class="fas fa-star text-warning me-1"></i>4.8</span>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <h5 class="fw-bold mb-1">@property.Title</h5>
+                                <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt text-primary me-2"></i>@property.City?.Name, @property.State?.Name</p>
+                                
+                                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                                    <div>
+                                        <small class="text-muted d-block small">Starting from</small>
+                                        <span class="fw-bold text-primary fs-5">₹@((property.Rooms?.Any() == true) ? property.Rooms.Min(r => r.Rent).ToString("N0") : "0")</span>
+                                    </div>
+                                    <a asp-action="PropertyDetails" asp-route-id="@property.Id" class="btn btn-outline-primary btn-sm rounded-pill px-4">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-search fs-1 text-muted mb-3 d-block"></i>
+                    <h4>No properties matching your criteria.</h4>
+                    <p class="text-muted">Try searching for a different city or area.</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>

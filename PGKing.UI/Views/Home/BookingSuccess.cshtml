@@ -1,0 +1,21 @@
+@{
+    ViewData["Title"] = "Booking Success";
+}
+
+<div class="container py-5 mt-5 text-center">
+    <div class="py-5">
+        <div class="mb-4">
+            <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                <i class="fas fa-check-circle text-success fs-1"></i>
+            </div>
+        </div>
+        <h1 class="fw-bold mb-3">Booking Request Sent!</h1>
+        <p class="text-muted fs-5 mb-5 mx-auto" style="max-width: 600px;">
+            Thank you for your interest! Your booking request has been received. Our team will contact you shortly on the provided mobile number to confirm your visit or booking details.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a asp-action="Index" class="btn btn-primary rounded-pill px-5 py-3 fw-bold">Back to Home</a>
+            <a asp-action="Properties" class="btn btn-outline-primary rounded-pill px-5 py-3 fw-bold">Explore More</a>
+        </div>
+    </div>
+</div>

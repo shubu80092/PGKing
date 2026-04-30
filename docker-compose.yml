@@ -1,0 +1,18 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: PGKing-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: my-secret-pw
+      MYSQL_DATABASE: pgkingDb
+      MYSQL_USER: pgkinguser
+      MYSQL_PASSWORD: pgkingpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+# Move this to the top level (no spaces before 'volumes')
+volumes:
+  mysql_data:

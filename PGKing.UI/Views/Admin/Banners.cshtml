@@ -1,0 +1,69 @@
+@model IEnumerable<PGKing.Application.Entities.Banner>
+@{
+    ViewData["Title"] = "Banner Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0">Home Page Banners</h5>
+        <a asp-action="CreateBanner" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i> Add Banner</a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Order</th>
+                        <th>Preview</th>
+                        <th>Title / Subtitle</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><span class="badge bg-light text-dark border">@item.DisplayOrder</span></td>
+                                <td>
+                                    <img src="@item.ImageUrl" class="rounded" style="width: 120px; height: 60px; object-fit: cover;" />
+                                </td>
+                                <td>
+                                    <div class="fw-bold">@item.Title</div>
+                                    <div class="small text-muted text-truncate" style="max-width: 300px;">@item.SubTitle</div>
+                                </td>
+                                <td>
+                                    @if(item.IsActive) {
+                                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Active</span>
+                                    } else {
+                                        <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Hidden</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a asp-action="EditBanner" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning mx-1"><i class="fas fa-edit"></i></a>
+                                        <form asp-action="DeleteBanner" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Delete this banner?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="fas fa-images fs-1 mb-3 d-block"></i>
+                                No banners found. Create your first homepage banner.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

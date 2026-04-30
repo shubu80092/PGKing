@@ -1,0 +1,54 @@
+@model PGKing.Application.Entities.Banner
+@{
+    ViewData["Title"] = "Add New Banner";
+    Layout = "_AdminLayout";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold"><i class="fas fa-plus-circle text-primary me-2"></i> Create Homepage Banner</h5>
+                <p class="text-muted small">Upload an image and add text to be displayed on the homepage carousel.</p>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="CreateBanner" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label fw-semibold">Banner Title</label>
+                        <input asp-for="Title" class="form-control rounded-3" placeholder="e.g. Find Your Perfect Home" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="SubTitle" class="form-label fw-semibold">Banner Subtitle</label>
+                        <textarea asp-for="SubTitle" class="form-control rounded-3" rows="2" placeholder="e.g. PGKing provides wide range of options..."></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="DisplayOrder" class="form-label fw-semibold">Display Order</label>
+                            <input asp-for="DisplayOrder" type="number" class="form-control rounded-3" value="0" />
+                        </div>
+                        <div class="col-md-6 mb-4 d-flex align-items-end">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" asp-for="IsActive" checked>
+                                <label class="form-check-label fw-semibold" asp-for="IsActive">Show on Homepage</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Upload Banner Image</label>
+                        <input type="file" name="imageFile" class="form-control rounded-3" accept="image/*" required />
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Banners" class="btn btn-light rounded-pill px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">Save Banner</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

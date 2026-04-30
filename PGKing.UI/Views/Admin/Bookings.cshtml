@@ -1,0 +1,76 @@
+@model IEnumerable<PGKing.Application.Entities.Booking>
+@{
+    ViewData["Title"] = "Booking Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-0 pt-4 pb-0">
+        <h5 class="fw-bold mb-0">Room Booking Requests</h5>
+        <p class="text-muted small">Manage and track all bed reservation requests from users.</p>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>User Details</th>
+                        <th>Property / Room</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><div class="small text-muted">@item.CreatedAt.ToString("dd MMM yyyy")</div></td>
+                                <td>
+                                    <div class="fw-bold">@item.FullName</div>
+                                    <div class="small text-muted"><i class="fas fa-phone me-1"></i> @item.MobileNumber</div>
+                                </td>
+                                <td>
+                                    <div class="small fw-semibold">@item.Property?.Title</div>
+                                    <div class="small text-primary">@item.Room?.SharingType</div>
+                                </td>
+                                <td>
+                                    @if(item.Status == "Pending") {
+                                        <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">Pending</span>
+                                    } else if(item.Status == "Confirmed") {
+                                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Confirmed</span>
+                                    } else {
+                                        <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Cancelled</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            Update
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><form asp-action="UpdateBookingStatus" method="post"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" name="status" value="Confirmed" /><button type="submit" class="dropdown-item text-success">Confirm</button></form></li>
+                                            <li><form asp-action="UpdateBookingStatus" method="post"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" name="status" value="Cancelled" /><button type="submit" class="dropdown-item text-danger">Cancel</button></form></li>
+                                            <li><form asp-action="UpdateBookingStatus" method="post"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" name="status" value="Pending" /><button type="submit" class="dropdown-item">Mark Pending</button></form></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="fas fa-calendar-check fs-1 mb-3 d-block"></i>
+                                No booking requests yet.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

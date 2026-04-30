@@ -1,0 +1,194 @@
+@model PGKing.Application.Entities.Property
+@{
+    ViewData["Title"] = "Manage Property & Rooms";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-between mb-3">
+    <a asp-action="Properties" class="btn btn-outline-secondary btn-sm rounded-pill px-3"><i class="fas fa-arrow-left me-2"></i> Back to Properties</a>
+</div>
+
+<div class="row g-4">
+    <!-- Property Info & Gallery -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+            {
+                <img src="@Model.ImageUrl" class="card-img-top" style="height: 200px; object-fit: cover; border-top-left-radius: 1rem; border-top-right-radius: 1rem;" />
+            }
+            <div class="card-body p-4">
+                <h4 class="fw-bold mb-1">@Model.Title</h4>
+                <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt text-primary me-1"></i> @Model.Address, @Model.City?.Name, @Model.State?.Name</p>
+                
+                <hr class="text-muted opacity-25">
+                
+                <!-- About Section (Quick Edit) -->
+                <h6 class="fw-bold mb-2 mt-4">About this Property</h6>
+                <form asp-action="UpdatePropertyAbout" method="post" class="mb-3">
+                    <input type="hidden" name="propertyId" value="@Model.Id" />
+                    <textarea name="description" class="form-control form-control-sm rounded-3 mb-2" rows="4" placeholder="Describe your property...">@Model.Description</textarea>
+                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 w-100">Save Description</button>
+                </form>
+
+                <hr class="text-muted opacity-25 mt-4">
+
+                <h6 class="fw-bold mb-3">Property Gallery</h6>
+                <form asp-action="AddGalleryImages" method="post" enctype="multipart/form-data" class="mb-3">
+                    <input type="hidden" name="propertyId" value="@Model.Id" />
+                    <div class="input-group">
+                        <input type="file" name="galleryFiles" class="form-control form-control-sm" multiple accept="image/*" required>
+                        <button class="btn btn-primary btn-sm" type="submit">Upload</button>
+                    </div>
+                </form>
+                
+                <div class="row g-2">
+                    @if (Model.Media != null && Model.Media.Any())
+                    {
+                        foreach (var m in Model.Media)
+                        {
+                            <div class="col-4 position-relative">
+                                <img src="@m.FilePath" class="rounded w-100" style="height: 60px; object-fit: cover;" />
+                                <form asp-action="DeletePropertyMedia" method="post" class="position-absolute top-0 end-0">
+                                    <input type="hidden" name="id" value="@m.Id" />
+                                    <input type="hidden" name="propertyId" value="@Model.Id" />
+                                    <button type="submit" class="btn btn-danger btn-xs p-0 px-1 rounded-circle border-0" style="font-size: 10px; transform: translate(5px, -5px);">&times;</button>
+                                </form>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+            <div class="card-footer bg-white border-0 p-4 pt-0">
+                <a asp-action="EditProperty" asp-route-id="@Model.Id" class="btn btn-outline-primary w-100 rounded-pill"><i class="fas fa-edit me-2"></i>Edit Other Details</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Rooms -->
+    <div class="col-lg-8">
+        <!-- Add Room Form -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold"><i class="fas fa-bed text-primary me-2"></i> Add PG Room / Bed</h5>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="AddRoom" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="PropertyId" value="@Model.Id" />
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Sharing Type</label>
+                            <select name="SharingType" class="form-select rounded-3 shadow-none" required>
+                                <option value="">Select Type...</option>
+                                <option value="Single Sharing Bed">Single Sharing Bed</option>
+                                <option value="Double Sharing Bed">Double Sharing Bed</option>
+                                <option value="3 Sharing Bed">3 Sharing Bed</option>
+                                <option value="bed sharing me">Bed Sharing Me</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Monthly Rent (₹)</label>
+                            <input type="number" name="Rent" class="form-control rounded-3 shadow-none" placeholder="Rent" required min="0" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Deposit (₹)</label>
+                            <input type="number" name="Deposit" class="form-control rounded-3 shadow-none" placeholder="Deposit" required min="0" />
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small d-block mb-3">Room Amenities & Features</label>
+                        <div class="row g-3">
+                            @{
+                                var commonRoomAmenities = new string[] { 
+                                    "Attached Washroom", "Air Conditioner (AC)", "Single Bed", "Double Bed", 
+                                    "Almirah / Wardrobe", "Study Table & Chair", "Geyser", "Personal TV", 
+                                    "Balcony", "Fan & Lights" 
+                                };
+                            }
+                            @foreach (var amenity in commonRoomAmenities)
+                            {
+                                <div class="col-md-4 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="selectedAmenities" value="@amenity" id="room_@amenity.Replace(" ", "_")">
+                                        <label class="form-check-label small" for="room_@amenity.Replace(" ", "_")">@amenity</label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small">Upload Room Images & Videos</label>
+                        <input type="file" name="mediaFiles" class="form-control rounded-3 shadow-none" multiple accept="image/*,video/*" required />
+                    </div>
+                    
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 fw-bold"><i class="fas fa-plus me-2"></i> Add Room</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Rooms List -->
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold">Current Room Configurations</h5>
+            </div>
+            <div class="card-body p-0 mt-3">
+                @if (Model.Rooms != null && Model.Rooms.Any())
+                {
+                    foreach (var room in Model.Rooms)
+                    {
+                        <div class="border-bottom p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="fw-bold mb-1">@room.SharingType</h6>
+                                    <div class="small">
+                                        <span class="text-primary fw-bold">Rent: ₹@room.Rent.ToString("N0")</span> | 
+                                        <span class="text-muted">Deposit: ₹@room.Deposit.ToString("N0")</span>
+                                    </div>
+                                    @if(!string.IsNullOrEmpty(room.Amenities)) {
+                                        <div class="mt-2">
+                                            @foreach(var am in room.Amenities.Split(',')) {
+                                                <span class="badge bg-light text-dark border-0 small me-1" style="font-size: 10px;"><i class="fas fa-check text-success me-1"></i>@am</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                <form asp-action="DeleteRoom" method="post">
+                                    <input type="hidden" name="id" value="@room.Id" />
+                                    <input type="hidden" name="propertyId" value="@Model.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0 rounded-circle"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                            
+                            <div class="row g-2">
+                                @if (room.Media != null && room.Media.Any())
+                                {
+                                    foreach (var media in room.Media)
+                                    {
+                                        <div class="col-2">
+                                            <div class="rounded overflow-hidden" style="height: 60px;">
+                                                @if (media.MediaType == "Image")
+                                                {
+                                                    <img src="@media.FilePath" class="w-100 h-100" style="object-fit: cover; cursor: pointer;" onclick="window.open('@media.FilePath', '_blank')" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="bg-dark d-flex align-items-center justify-content-center w-100 h-100 position-relative" style="cursor: pointer;" onclick="window.open('@media.FilePath', '_blank')">
+                                                        <i class="fas fa-play text-white opacity-75 small"></i>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

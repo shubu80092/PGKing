@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="d-flex flex-column flex-lg-row">
+        <!-- Sidebar -->
+        <nav class="admin-sidebar d-flex flex-column flex-shrink-0" style="width: 280px;">
+            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none px-4 mt-2">
+                <i class="fa-solid fa-crown text-warning fs-3 me-2"></i>
+                <span class="fs-4 fw-bold">PGKing Admin</span>
+            </a>
+            <hr class="border-secondary mx-3">
+            <ul class="nav nav-pills flex-column mb-auto px-2">
+                <li class="nav-item">
+                    <a asp-controller="Admin" asp-action="Dashboard" class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Dashboard" ? "active" : "")">
+                        <i class="fas fa-home fa-fw me-2"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Admin" asp-action="Properties" class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Properties" ? "active" : "")">
+                        <i class="fas fa-building fa-fw me-2"></i>
+                        Properties
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Admin" asp-action="Banners" class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Banners" ? "active" : "")">
+                        <i class="fas fa-images fa-fw me-2"></i>
+                        Homepage Banners
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Admin" asp-action="Bookings" class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Bookings" ? "active" : "")">
+                        <i class="fas fa-calendar-check fa-fw me-2"></i>
+                        Booking Requests
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-users fa-fw me-2"></i>
+                        Tenants
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-cog fa-fw me-2"></i>
+                        Settings
+                    </a>
+                </li>
+            </ul>
+            <hr class="border-secondary mx-3">
+            <div class="dropdown px-3 pb-3">
+                <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="https://ui-avatars.com/api/?name=Admin+User&background=4F46E5&color=fff" alt="" width="32" height="32" class="rounded-circle me-2">
+                    <strong>Admin User</strong>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                    <li><a class="dropdown-item" href="#">Profile</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" asp-controller="Auth" asp-action="Logout">Sign out</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="admin-content flex-grow-1 w-100">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+                <h1 class="h2 fw-bold text-dark">@ViewData["Title"]</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+                    </div>
+                </div>
+            </div>
+
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
