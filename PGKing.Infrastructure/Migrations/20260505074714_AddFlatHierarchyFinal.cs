@@ -11,29 +11,12 @@ namespace PGKing.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            /*
-            migrationBuilder.DropForeignKey(
-                name: "FK_PGRooms_Properties_PropertyId",
-                table: "PGRooms");
-
-            migrationBuilder.DropIndex(
-                name: "IX_PGRooms_PropertyId",
-                table: "PGRooms");
-
-            migrationBuilder.DropColumn(
-                name: "PropertyId",
-                table: "PGRooms");
-            */
-
-            /*
             migrationBuilder.AddColumn<int>(
                 name: "FlatId",
                 table: "PGRooms",
                 type: "int",
                 nullable: true);
-            */
 
-            /*
             migrationBuilder.CreateTable(
                 name: "Flats",
                 columns: table => new
@@ -57,9 +40,7 @@ namespace PGKing.Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
-            */
 
-            /*
             migrationBuilder.CreateTable(
                 name: "FlatMedias",
                 columns: table => new
@@ -105,8 +86,8 @@ namespace PGKing.Infrastructure.Migrations
                 column: "FlatId",
                 principalTable: "Flats",
                 principalColumn: "Id");
-            */
         }
+
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)

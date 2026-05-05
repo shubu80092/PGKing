@@ -22,5 +22,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
+# Enable globalization invariant mode to prevent crashes on some Linux distros
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=true
+
 # Set the entry point
 ENTRYPOINT ["dotnet", "PGKing.UI.dll"]
+
