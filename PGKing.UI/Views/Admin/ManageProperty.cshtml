@@ -1,6 +1,6 @@
 @model PGKing.Application.Entities.Property
 @{
-    ViewData["Title"] = "Manage Property & Rooms";
+    ViewData["Title"] = "Manage Property Hierarchy";
     Layout = "_AdminLayout";
 }
 
@@ -9,30 +9,19 @@
 </div>
 
 <div class="row g-4">
-    <!-- Property Info & Gallery -->
+    <!-- Property Sidebar -->
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm rounded-4 mb-4">
             @if (!string.IsNullOrEmpty(Model.ImageUrl))
             {
-                <img src="@Model.ImageUrl" class="card-img-top" style="height: 200px; object-fit: cover; border-top-left-radius: 1rem; border-top-right-radius: 1rem;" />
+                <img src="@Model.ImageUrl" class="card-img-top" style="height: 180px; object-fit: cover; border-top-left-radius: 1rem; border-top-right-radius: 1rem;" />
             }
             <div class="card-body p-4">
                 <h4 class="fw-bold mb-1">@Model.Title</h4>
-                <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt text-primary me-1"></i> @Model.Address, @Model.City?.Name, @Model.State?.Name</p>
+                <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt text-primary me-1"></i> @Model.Address</p>
+                <hr class="opacity-25">
                 
-                <hr class="text-muted opacity-25">
-                
-                <!-- About Section (Quick Edit) -->
-                <h6 class="fw-bold mb-2 mt-4">About this Property</h6>
-                <form asp-action="UpdatePropertyAbout" method="post" class="mb-3">
-                    <input type="hidden" name="propertyId" value="@Model.Id" />
-                    <textarea name="description" class="form-control form-control-sm rounded-3 mb-2" rows="4" placeholder="Describe your property...">@Model.Description</textarea>
-                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 w-100">Save Description</button>
-                </form>
-
-                <hr class="text-muted opacity-25 mt-4">
-
-                <h6 class="fw-bold mb-3">Property Gallery</h6>
+                <h6 class="fw-bold mb-3">Add Property Gallery</h6>
                 <form asp-action="AddGalleryImages" method="post" enctype="multipart/form-data" class="mb-3">
                     <input type="hidden" name="propertyId" value="@Model.Id" />
                     <div class="input-group">
@@ -42,147 +31,156 @@
                 </form>
                 
                 <div class="row g-2">
-                    @if (Model.Media != null && Model.Media.Any())
+                    @foreach (var m in Model.Media)
                     {
-                        foreach (var m in Model.Media)
-                        {
-                            <div class="col-4 position-relative">
-                                <img src="@m.FilePath" class="rounded w-100" style="height: 60px; object-fit: cover;" />
-                                <form asp-action="DeletePropertyMedia" method="post" class="position-absolute top-0 end-0">
-                                    <input type="hidden" name="id" value="@m.Id" />
-                                    <input type="hidden" name="propertyId" value="@Model.Id" />
-                                    <button type="submit" class="btn btn-danger btn-xs p-0 px-1 rounded-circle border-0" style="font-size: 10px; transform: translate(5px, -5px);">&times;</button>
-                                </form>
-                            </div>
-                        }
+                        <div class="col-4 position-relative">
+                            <img src="@m.FilePath" class="rounded w-100" style="height: 50px; object-fit: cover;" />
+                            <form asp-action="DeletePropertyMedia" method="post" class="position-absolute top-0 end-0">
+                                <input type="hidden" name="id" value="@m.Id" />
+                                <input type="hidden" name="propertyId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-danger btn-xs p-0 px-1 rounded-circle border-0" style="font-size: 10px; transform: translate(5px, -5px);">&times;</button>
+                            </form>
+                        </div>
                     }
                 </div>
-            </div>
-            <div class="card-footer bg-white border-0 p-4 pt-0">
-                <a asp-action="EditProperty" asp-route-id="@Model.Id" class="btn btn-outline-primary w-100 rounded-pill"><i class="fas fa-edit me-2"></i>Edit Other Details</a>
             </div>
         </div>
     </div>
 
-    <!-- Manage Rooms -->
+    <!-- Main Workspace -->
     <div class="col-lg-8">
-        <!-- Add Room Form -->
-        <div class="card border-0 shadow-sm rounded-4 mb-4">
-            <div class="card-header bg-white border-0 pt-4 pb-0">
-                <h5 class="fw-bold"><i class="fas fa-bed text-primary me-2"></i> Add PG Room / Bed</h5>
+        <!-- Add New Flat Form -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-plus-circle me-2"></i> Step 1: Add New Flat</h5>
             </div>
             <div class="card-body p-4">
-                <form asp-action="AddRoom" method="post" enctype="multipart/form-data">
-                    <input type="hidden" name="PropertyId" value="@Model.Id" />
-                    
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold small">Sharing Type</label>
-                            <select name="SharingType" class="form-select rounded-3 shadow-none" required>
-                                <option value="">Select Type...</option>
-                                <option value="Single Sharing Bed">Single Sharing Bed</option>
-                                <option value="Double Sharing Bed">Double Sharing Bed</option>
-                                <option value="3 Sharing Bed">3 Sharing Bed</option>
-                                <option value="bed sharing me">Bed Sharing Me</option>
+                <form asp-action="AddFlat" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="propertyId" value="@Model.Id" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Flat Name / No.</label>
+                            <input type="text" name="flatName" class="form-control rounded-3" placeholder="e.g. Flat 101, Suite A" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Flat Type (BHK)</label>
+                            <select name="bhkType" class="form-select rounded-3" required>
+                                <option value="1 BHK">1 BHK</option>
+                                <option value="2 BHK">2 BHK</option>
+                                <option value="3 BHK">3 BHK</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold small">Monthly Rent (₹)</label>
-                            <input type="number" name="Rent" class="form-control rounded-3 shadow-none" placeholder="Rent" required min="0" />
+                        <div class="col-12">
+                            <label class="form-label fw-bold small">Upload Flat Images & Videos (Hall, Kitchen, etc.)</label>
+                            <input type="file" name="mediaFiles" class="form-control rounded-3" multiple accept="image/*,video/*" required />
+                            <small class="text-muted">These photos will represent the entire flat unit.</small>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold small">Deposit (₹)</label>
-                            <input type="number" name="Deposit" class="form-control rounded-3 shadow-none" placeholder="Deposit" required min="0" />
+                        <div class="col-12 text-end mt-3">
+                            <button type="submit" class="btn btn-primary px-4 rounded-pill fw-bold">Create Flat</button>
                         </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold small d-block mb-3">Room Amenities & Features</label>
-                        <div class="row g-3">
-                            @{
-                                var commonRoomAmenities = new string[] { 
-                                    "Attached Washroom", "Air Conditioner (AC)", "Single Bed", "Double Bed", 
-                                    "Almirah / Wardrobe", "Study Table & Chair", "Geyser", "Personal TV", 
-                                    "Balcony", "Fan & Lights" 
-                                };
-                            }
-                            @foreach (var amenity in commonRoomAmenities)
-                            {
-                                <div class="col-md-4 col-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="selectedAmenities" value="@amenity" id="room_@amenity.Replace(" ", "_")">
-                                        <label class="form-check-label small" for="room_@amenity.Replace(" ", "_")">@amenity</label>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold small">Upload Room Images & Videos</label>
-                        <input type="file" name="mediaFiles" class="form-control rounded-3 shadow-none" multiple accept="image/*,video/*" required />
-                    </div>
-                    
-                    <div class="d-flex justify-content-end">
-                        <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 fw-bold"><i class="fas fa-plus me-2"></i> Add Room</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- Rooms List -->
+        <!-- Existing Flats & Beds -->
         <div class="card border-0 shadow-sm rounded-4">
             <div class="card-header bg-white border-0 pt-4 pb-0">
-                <h5 class="fw-bold">Current Room Configurations</h5>
+                <h5 class="fw-bold"><i class="fas fa-list text-primary me-2"></i> Step 2: Manage Flats & Beds</h5>
             </div>
-            <div class="card-body p-0 mt-3">
-                @if (Model.Rooms != null && Model.Rooms.Any())
+            <div class="card-body p-4">
+                @if (Model.Flats == null || !Model.Flats.Any())
                 {
-                    foreach (var room in Model.Rooms)
+                    <div class="text-center py-5">
+                        <i class="fas fa-building text-muted mb-3 fs-1 opacity-25"></i>
+                        <p class="text-muted">No flats added yet. Start by adding a flat above.</p>
+                    </div>
+                }
+                else
+                {
+                    foreach (var flat in Model.Flats)
                     {
-                        <div class="border-bottom p-4">
+                        <div class="flat-container mb-4 p-3 rounded-4 border border-light shadow-sm">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
-                                    <h6 class="fw-bold mb-1">@room.SharingType</h6>
-                                    <div class="small">
-                                        <span class="text-primary fw-bold">Rent: ₹@room.Rent.ToString("N0")</span> | 
-                                        <span class="text-muted">Deposit: ₹@room.Deposit.ToString("N0")</span>
-                                    </div>
-                                    @if(!string.IsNullOrEmpty(room.Amenities)) {
-                                        <div class="mt-2">
-                                            @foreach(var am in room.Amenities.Split(',')) {
-                                                <span class="badge bg-light text-dark border-0 small me-1" style="font-size: 10px;"><i class="fas fa-check text-success me-1"></i>@am</span>
-                                            }
-                                        </div>
-                                    }
+                                    <span class="badge bg-primary px-3 rounded-pill mb-1">@flat.BhkType</span>
+                                    <h5 class="fw-bold mb-0">@flat.Name</h5>
                                 </div>
-                                <form asp-action="DeleteRoom" method="post">
-                                    <input type="hidden" name="id" value="@room.Id" />
-                                    <input type="hidden" name="propertyId" value="@Model.Id" />
-                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0 rounded-circle"><i class="fas fa-trash"></i></button>
-                                </form>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-success rounded-pill px-3" onclick="showAddBedForm(@flat.Id, '@flat.Name')"><i class="fas fa-plus me-1"></i> Add Bed</button>
+                                    <form asp-action="DeleteFlat" method="post">
+                                        <input type="hidden" name="id" value="@flat.Id" />
+                                        <input type="hidden" name="propertyId" value="@Model.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
                             </div>
-                            
-                            <div class="row g-2">
-                                @if (room.Media != null && room.Media.Any())
+
+                            <!-- Flat Media Preview -->
+                            <div class="row g-2 mb-3">
+                                @foreach (var m in flat.Media)
                                 {
-                                    foreach (var media in room.Media)
-                                    {
-                                        <div class="col-2">
-                                            <div class="rounded overflow-hidden" style="height: 60px;">
-                                                @if (media.MediaType == "Image")
+                                    <div class="col-2">
+                                        <img src="@m.FilePath" class="rounded w-100" style="height: 50px; object-fit: cover;" />
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Beds List in this Flat -->
+                            <div class="bg-light rounded-4 p-3">
+                                <h6 class="fw-bold small mb-3 text-muted">Bed / Sharing Configurations:</h6>
+                                @if (flat.Rooms == null || !flat.Rooms.Any())
+                                {
+                                    <p class="small text-muted mb-0">No beds added to this flat yet.</p>
+                                }
+                                else
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-borderless align-middle mb-0">
+                                            <thead class="text-muted small">
+                                                <tr>
+                                                    <th>Sharing Type</th>
+                                                    <th>Rent</th>
+                                                    <th>Deposit</th>
+                                                    <th>Amenities</th>
+                                                    <th>Status</th>
+                                                    <th class="text-end">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var room in flat.Rooms)
                                                 {
-                                                    <img src="@media.FilePath" class="w-100 h-100" style="object-fit: cover; cursor: pointer;" onclick="window.open('@media.FilePath', '_blank')" />
+                                                    <tr>
+                                                        <td class="fw-bold small">@room.SharingType</td>
+                                                        <td class="small">₹@room.Rent.ToString("N0")</td>
+                                                        <td class="small">₹@room.Deposit.ToString("N0")</td>
+                                                        <td>
+                                                            @foreach (var am in room.Amenities.Split(','))
+                                                            {
+                                                                <span class="badge bg-white text-dark border small fw-normal" style="font-size: 9px;">@am</span>
+                                                            }
+                                                        </td>
+                                                        <td>
+                                                            <form asp-action="ToggleRoomStatus" method="post">
+                                                                <input type="hidden" name="roomId" value="@room.Id" />
+                                                                <input type="hidden" name="propertyId" value="@Model.Id" />
+                                                                <button type="submit" class="btn btn-sm @(room.IsOccupied ? "btn-danger" : "btn-success") rounded-pill px-3 py-0" style="font-size: 10px;">
+                                                                    @(room.IsOccupied ? "Full" : "Empty")
+                                                                </button>
+                                                            </form>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <form asp-action="DeleteRoom" method="post">
+                                                                <input type="hidden" name="id" value="@room.Id" />
+                                                                <input type="hidden" name="propertyId" value="@Model.Id" />
+                                                                <button type="submit" class="btn btn-link text-danger p-0"><i class="fas fa-times"></i></button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
                                                 }
-                                                else
-                                                {
-                                                    <div class="bg-dark d-flex align-items-center justify-content-center w-100 h-100 position-relative" style="cursor: pointer;" onclick="window.open('@media.FilePath', '_blank')">
-                                                        <i class="fas fa-play text-white opacity-75 small"></i>
-                                                    </div>
-                                                }
-                                            </div>
-                                        </div>
-                                    }
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 }
                             </div>
                         </div>
@@ -192,3 +190,70 @@
         </div>
     </div>
 </div>
+
+<!-- Add Bed Modal -->
+<div class="modal fade" id="addBedModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title fw-bold"><i class="fas fa-bed me-2"></i> Add Bed Configuration - <span id="modalFlatName"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form asp-action="AddRoom" method="post">
+                    <input type="hidden" name="FlatId" id="modalFlatId" />
+                    <input type="hidden" name="propertyId" value="@Model.Id" />
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <label class="form-label fw-bold small">Sharing / Bed Type</label>
+                            <input type="text" name="SharingType" class="form-control rounded-3" placeholder="e.g. Master Bedroom Double Sharing" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Monthly Rent (₹)</label>
+                            <input type="number" name="Rent" class="form-control rounded-3" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Deposit (₹)</label>
+                            <input type="number" name="Deposit" class="form-control rounded-3" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small d-block mb-3">Room Amenities</label>
+                        <div class="row g-2">
+                            @{
+                                var roomAmenities = new string[] { 
+                                    "Washing Machine", "Refrigerator", "Aqua Guard", "Geyser", "Wi-Fi", 
+                                    "Cooking and Gas Connections", "Separate Almira", "Beds Matters", 
+                                    "Pest control", "Housekeeping services" 
+                                };
+                            }
+                            @foreach (var am in roomAmenities)
+                            {
+                                <div class="col-md-4 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="selectedAmenities" value="@am" id="am_@am.Replace(" ", "_")">
+                                        <label class="form-check-label small" for="am_@am.Replace(" ", "_")">@am</label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success px-5 rounded-pill fw-bold">Save Bed Detail</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showAddBedForm(flatId, flatName) {
+        document.getElementById('modalFlatId').value = flatId;
+        document.getElementById('modalFlatName').innerText = flatName;
+        new bootstrap.Modal(document.getElementById('addBedModal')).show();
+    }
+</script>

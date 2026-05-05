@@ -19,12 +19,14 @@ namespace PGKing.Application.Entities
         [Required]
         public decimal Deposit { get; set; }
 
-        public int PropertyId { get; set; }
-        [ForeignKey("PropertyId")]
-        public Property? Property { get; set; }
+        public int? FlatId { get; set; }
+        [ForeignKey("FlatId")]
+        public Flat? Flat { get; set; }
         
         public string Amenities { get; set; } = string.Empty; // Comma separated list like "AC,Attached Washroom,Bed"
 
+        public bool IsOccupied { get; set; } = false;
+        
         public ICollection<RoomMedia> Media { get; set; } = new List<RoomMedia>();
     }
 }

@@ -32,7 +32,7 @@ namespace PGKing.Application.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        public ICollection<PGRoom> Rooms { get; set; } = new List<PGRoom>();
+        public ICollection<Flat> Flats { get; set; } = new List<Flat>();
         
         public ICollection<PropertyMedia> Media { get; set; } = new List<PropertyMedia>();
     }

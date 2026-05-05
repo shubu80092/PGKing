@@ -1,126 +1,182 @@
+@model List<PGKing.Application.Entities.Booking>
 @{
     ViewData["Title"] = "Dashboard Overview";
     Layout = "_AdminLayout";
+    
+    var totalBeds = (int)ViewBag.TotalBeds;
+    var occupiedBeds = (int)ViewBag.OccupiedBeds;
+    var availableBeds = (int)ViewBag.AvailableBeds;
+    var occupancyRate = totalBeds > 0 ? (int)((double)occupiedBeds / totalBeds * 100) : 0;
 }
 
-<div class="row g-4 animate-fade-in">
+<div class="row g-4 mb-4">
     <div class="col-12 col-sm-6 col-xxl-3">
-        <div class="dashboard-card">
+        <div class="dashboard-card shadow-sm border-0 animate-fade-in">
             <div class="dashboard-icon icon-primary">
-                <i class="fas fa-building"></i>
+                <i class="fas fa-building-user"></i>
             </div>
             <div>
-                <p class="dashboard-stat-title">Total Properties</p>
+                <p class="dashboard-stat-title text-muted">Properties</p>
                 <h3 class="dashboard-stat-value">@ViewBag.PropertiesCount</h3>
             </div>
         </div>
     </div>
     <div class="col-12 col-sm-6 col-xxl-3">
-        <div class="dashboard-card">
+        <div class="dashboard-card shadow-sm border-0 animate-fade-in" style="animation-delay: 0.1s">
             <div class="dashboard-icon icon-success">
-                <i class="fas fa-users"></i>
+                <i class="fas fa-house-chimney-user"></i>
             </div>
             <div>
-                <p class="dashboard-stat-title">Active Tenants</p>
-                <h3 class="dashboard-stat-value">124</h3>
+                <p class="dashboard-stat-title text-muted">Total Flats</p>
+                <h3 class="dashboard-stat-value">@ViewBag.FlatsCount</h3>
             </div>
         </div>
     </div>
     <div class="col-12 col-sm-6 col-xxl-3">
-        <div class="dashboard-card">
+        <div class="dashboard-card shadow-sm border-0 animate-fade-in" style="animation-delay: 0.2s">
             <div class="dashboard-icon icon-warning">
-                <i class="fas fa-bed"></i>
+                <i class="fas fa-bed-pulse"></i>
             </div>
             <div>
-                <p class="dashboard-stat-title">Available Beds</p>
-                <h3 class="dashboard-stat-value">48</h3>
+                <p class="dashboard-stat-title text-muted">Available Beds</p>
+                <h3 class="dashboard-stat-value text-success">@availableBeds</h3>
+                <small class="text-muted fw-bold" style="font-size: 0.65rem;">CAPACITY: @totalBeds</small>
             </div>
         </div>
     </div>
     <div class="col-12 col-sm-6 col-xxl-3">
-        <div class="dashboard-card">
-            <div class="dashboard-icon" style="background: #FEF2F2; color: #EF4444;">
-                <i class="fas fa-wallet"></i>
+        <div class="dashboard-card shadow-sm border-0 animate-fade-in" style="animation-delay: 0.3s">
+            <div class="dashboard-icon" style="background: rgba(239, 68, 68, 0.08); color: #EF4444;">
+                <i class="fas fa-chart-line"></i>
             </div>
             <div>
-                <p class="dashboard-stat-title">Revenue (Monthly)</p>
-                <h3 class="dashboard-stat-value">₹ 4.2L</h3>
+                <p class="dashboard-stat-title text-muted">Monthly Revenue</p>
+                <h3 class="dashboard-stat-value">₹ @(((decimal)ViewBag.MonthlyRevenue).ToString("N0"))</h3>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row mt-4">
-    <div class="col-12 col-xl-8 mb-4">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
-            <div class="card-header bg-white border-0 pt-4 pb-0">
-                <h5 class="fw-bold">Recent Bookings</h5>
+<div class="row">
+    <!-- Recent Activity -->
+    <div class="col-xl-8 mb-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100 animate-fade-in">
+            <div class="card-header bg-white border-0 p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Recent Activity</h5>
+                    <a asp-action="Bookings" class="btn btn-sm btn-light rounded-pill px-3 fw-bold border">View All</a>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <th>Tenant Name</th>
-                                <th>Property</th>
-                                <th>Date</th>
-                                <th>Status</th>
+                                <th class="px-4 py-3 border-0">User</th>
+                                <th class="py-3 border-0">Stay Details</th>
+                                <th class="py-3 border-0">Date</th>
+                                <th class="py-3 border-0">Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td><img src="https://ui-avatars.com/api/?name=Rahul+Kumar&background=random" width="32" class="rounded-circle me-2"> Rahul Kumar</td>
-                                <td>Navkar PG Vikhroli</td>
-                                <td>Oct 24, 2023</td>
-                                <td><span class="badge bg-success bg-opacity-10 text-success px-2 py-1">Confirmed</span></td>
-                            </tr>
-                            <tr>
-                                <td><img src="https://ui-avatars.com/api/?name=Priya+Sharma&background=random" width="32" class="rounded-circle me-2"> Priya Sharma</td>
-                                <td>Orchid Girls Hostel</td>
-                                <td>Oct 23, 2023</td>
-                                <td><span class="badge bg-warning bg-opacity-10 text-warning px-2 py-1">Pending</span></td>
-                            </tr>
-                            <tr>
-                                <td><img src="https://ui-avatars.com/api/?name=Amit+Patel&background=random" width="32" class="rounded-circle me-2"> Amit Patel</td>
-                                <td>Signature Boy's PG</td>
-                                <td>Oct 21, 2023</td>
-                                <td><span class="badge bg-success bg-opacity-10 text-success px-2 py-1">Confirmed</span></td>
-                            </tr>
+                            @if (Model != null && Model.Any())
+                            {
+                                foreach (var booking in Model)
+                                {
+                                    <tr>
+                                        <td class="px-4 py-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-primary-soft rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 42px; height: 42px;">
+                                                    <i class="fas fa-user text-primary"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold text-dark">@booking.FullName</div>
+                                                    <div class="text-muted small">@booking.MobileNumber</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3">
+                                            <div class="fw-semibold small">@booking.Property?.Title</div>
+                                            <div class="text-muted small">ID: #BK-@booking.Id</div>
+                                        </td>
+                                        <td class="py-3"><span class="text-muted small fw-bold">@booking.CreatedAt.ToString("MMM dd, HH:mm")</span></td>
+                                        <td class="py-3">
+                                            @if (booking.Status == "Pending")
+                                            {
+                                                <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill fw-bold" style="font-size: 0.65rem;">PENDING</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold" style="font-size: 0.65rem;">CONFIRMED</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center py-5">
+                                        <div class="opacity-25 mb-3"><i class="fas fa-inbox fs-1"></i></div>
+                                        <p class="text-muted fw-bold">No active logs found.</p>
+                                    </td>
+                                </tr>
+                            }
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-12 col-xl-4 mb-4">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
-            <div class="card-header bg-white border-0 pt-4 pb-0">
-                <h5 class="fw-bold">Occupancy Rate</h5>
+
+    <!-- Occupancy Meter -->
+    <div class="col-xl-4 mb-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100 animate-fade-in" style="animation-delay: 0.2s">
+            <div class="card-header bg-white border-0 p-4 text-center">
+                <h5 class="fw-bold mb-0">Occupancy Meter</h5>
             </div>
-            <div class="card-body d-flex flex-column justify-content-center align-items-center">
-                <!-- Circular Progress Bar Placeholder -->
-                <div class="position-relative d-inline-block">
-                    <svg width="160" height="160" viewBox="0 0 160 160">
-                        <circle cx="80" cy="80" r="70" fill="none" stroke="#F3F4F6" stroke-width="15" />
-                        <circle cx="80" cy="80" r="70" fill="none" stroke="var(--primary)" stroke-width="15" stroke-dasharray="440" stroke-dashoffset="110" stroke-linecap="round" transform="rotate(-90 80 80)" />
+            <div class="card-body d-flex flex-column align-items-center p-4">
+                <div class="position-relative d-inline-block mb-4">
+                    <svg width="200" height="200" viewBox="0 0 160 160">
+                        <circle cx="80" cy="80" r="70" fill="none" stroke="#F1F5F9" stroke-width="14" />
+                        <circle cx="80" cy="80" r="70" fill="none" stroke="#0052FF" stroke-width="14" 
+                                stroke-dasharray="440" stroke-dashoffset="@(440 - (440 * occupancyRate / 100))" 
+                                stroke-linecap="round" transform="rotate(-90 80 80)" style="transition: stroke-dashoffset 1.5s ease-in-out;" />
                     </svg>
                     <div class="position-absolute top-50 start-50 translate-middle text-center">
-                        <h2 class="fw-bold mb-0 text-dark">75%</h2>
-                        <small class="text-muted">Occupied</small>
+                        <h1 class="fw-bold mb-0 text-dark">@occupancyRate%</h1>
+                        <p class="text-muted fw-bold small mb-0">OCCUPIED</p>
                     </div>
                 </div>
-                <div class="d-flex w-100 justify-content-between mt-4 text-center">
-                    <div>
-                        <h6 class="mb-0 fw-bold">124</h6>
-                        <small class="text-muted">Occupied Beds</small>
+                
+                <div class="w-100 px-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small fw-bold text-muted">Full Beds</span>
+                        <span class="small fw-bold text-primary">@occupiedBeds / @totalBeds</span>
                     </div>
-                    <div>
-                        <h6 class="mb-0 fw-bold">48</h6>
-                        <small class="text-muted">Available Beds</small>
+                    <div class="progress rounded-pill mb-4" style="height: 10px;">
+                        <div class="progress-bar bg-primary rounded-pill" style="width: @occupancyRate%"></div>
+                    </div>
+                    
+                    <div class="bg-primary-soft p-3 rounded-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success rounded-circle me-2" style="width: 10px; height: 10px;"></div>
+                                <span class="small fw-bold text-dark">Ready to Move</span>
+                            </div>
+                            <span class="badge bg-success px-2 py-1">@availableBeds</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeInUp 0.6s ease forwards; opacity: 0; }
+</style>

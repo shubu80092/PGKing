@@ -1,290 +1,329 @@
 @model PGKing.Application.Entities.Property
 @{
-    ViewData["Title"] = Model.Title;
-    var startingPrice = Model.Rooms?.Any() == true ? Model.Rooms.Min(r => r.Rent) : 0;
-    
-    // Combine all available images from the backend
+    ViewData["Title"] = Model.Title + " - Property Details";
+    var gridImages = new List<string>();
     var allImages = new List<string>();
     if (!string.IsNullOrEmpty(Model.ImageUrl)) allImages.Add(Model.ImageUrl);
-    if (Model.Media != null && Model.Media.Any()) 
+    if (Model.Media != null) allImages.AddRange(Model.Media.Select(m => m.FilePath));
+    if (Model.Flats != null)
     {
-        allImages.AddRange(Model.Media.Select(m => m.FilePath));
-    }
-    if (Model.Rooms != null)
-    {
-        foreach (var room in Model.Rooms)
+        foreach (var flat in Model.Flats)
         {
-            if (room.Media != null)
-            {
-                allImages.AddRange(room.Media.Where(m => m.MediaType == "Image").Select(m => m.FilePath));
-            }
+            if (flat.Media != null) allImages.AddRange(flat.Media.Select(m => m.FilePath));
         }
     }
-    allImages = allImages.Distinct().ToList();
     
-    var gridImages = allImages.ToList();
-    while (gridImages.Count < 3) {
+    gridImages = allImages.Take(5).ToList();
+    while (gridImages.Count < 5) {
         gridImages.Add("https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800");
     }
 }
 
+<style>
+    .ox-gallery { display: grid; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 250px 250px; gap: 12px; border-radius: 24px; overflow: hidden; margin-bottom: 30px; }
+    .ox-gallery-item { position: relative; cursor: pointer; overflow: hidden; }
+    .ox-gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+    .ox-gallery-item:hover img { transform: scale(1.05); }
+    .ox-gallery-item.main { grid-row: span 2; }
+    
+    .ox-main-content { display: flex; gap: 40px; }
+    .ox-left-col { flex: 0 0 65%; }
+    .ox-sidebar { flex: 0 0 35%; }
+
+    .ox-section-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 25px; display: flex; align-items: center; gap: 12px; }
+    .ox-section-title::after { content: ''; height: 2px; flex-grow: 1; background: #E2E8F0; }
+
+    .ox-tabs { display: flex; gap: 12px; margin-bottom: 25px; border-bottom: 1px solid #E2E8F0; padding-bottom: 15px; }
+    .ox-tab-btn { border: none; background: transparent; padding: 10px 25px; border-radius: 50px; font-weight: 700; color: var(--ox-muted); cursor: pointer; transition: all 0.3s; }
+    .ox-tab-btn.active { background: var(--ox-primary); color: white; box-shadow: 0 8px 15px rgba(0, 82, 255, 0.2); }
+
+    .ox-package-card { background: white; border: 1px solid #E2E8F0; border-radius: 20px; padding: 25px; margin-bottom: 20px; transition: all 0.3s; display: flex; justify-content: space-between; align-items: center; }
+    .ox-package-card:hover { border-color: var(--ox-primary); box-shadow: 0 10px 30px rgba(0, 82, 255, 0.08); background: #F8FAFF; }
+    
+    .ox-sticky-widget { position: sticky; top: 110px; background: white; border-radius: 24px; padding: 30px; border: 1px solid #E2E8F0; box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
+
+    @@media (max-width: 992px) {
+        .ox-main-content { flex-direction: column; }
+        .ox-left-col, .ox-sidebar { flex: 0 0 100%; }
+        .ox-gallery { grid-template-columns: 1fr 1fr; grid-template-rows: 250px 150px; }
+        .ox-gallery-item.main { grid-column: span 2; grid-row: span 1; }
+    }
+</style>
+
 <div class="container py-5 mt-5">
-    <!-- Gallery Grid -->
-    <div class="row g-2 mb-4 animate-fade-in">
-        <div class="col-md-8">
-            <div class="gallery-item main rounded-start-4 overflow-hidden" onclick="openLightbox(0)">
-                <img src="@gridImages[0]" class="w-100 h-100" style="object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200'">
+    <!-- Breadcrumb & Header -->
+    <div class="mb-4 animate-ox">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted fw-medium">Home</a></li>
+                <li class="breadcrumb-item"><a href="/Home/Properties" class="text-decoration-none text-muted fw-medium">Properties</a></li>
+                <li class="breadcrumb-item active text-primary fw-bold">@Model.Title</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-end">
+            <div>
+                <h1 class="display-4 fw-bold mb-2">@Model.Title</h1>
+                <p class="text-muted fs-5 mb-0"><i class="fas fa-map-marker-alt text-primary me-2"></i> @Model.Address, @Model.City?.Name</p>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="row g-2 h-100">
-                <div class="col-12 h-50">
-                    <div class="gallery-item rounded-end-top-4 overflow-hidden" onclick="openLightbox(1)">
-                        <img src="@gridImages[1]" class="w-100 h-100" style="object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1502672260266-1c1e52409818?w=800'">
-                    </div>
-                </div>
-                <div class="col-12 h-50">
-                    <div class="gallery-item rounded-end-bottom-4 overflow-hidden position-relative" onclick="openLightbox(2)">
-                        <img src="@gridImages[2]" class="w-100 h-100" style="object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1554995207-c18c203602cb?w=800'">
-                        @if (allImages.Count > 3)
-                        {
-                            <div class="gallery-overlay d-flex align-items-center justify-content-center">
-                                <span class="text-white fw-bold fs-4">+@(allImages.Count - 3) Photos</span>
-                            </div>
-                        }
-                    </div>
-                </div>
+            <div class="d-none d-md-flex gap-2">
+                <button class="btn btn-light rounded-pill border px-4 fw-bold"><i class="far fa-heart me-2"></i> Save</button>
+                <button class="btn btn-light rounded-pill border px-4 fw-bold"><i class="fas fa-share-alt me-2"></i> Share</button>
             </div>
         </div>
     </div>
 
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-action="Index">Home</a></li>
-            <li class="breadcrumb-item"><a asp-action="Properties">Properties</a></li>
-            <li class="breadcrumb-item active">@Model.Title</li>
-        </ol>
-    </nav>
+    <!-- Gallery Grid -->
+    <div class="ox-gallery animate-ox">
+        <div class="ox-gallery-item main" onclick="openLightbox(0)">
+            <img src="@gridImages[0]">
+        </div>
+        <div class="ox-gallery-item" onclick="openLightbox(1)">
+            <img src="@gridImages[1]">
+        </div>
+        <div class="ox-gallery-item" onclick="openLightbox(2)">
+            <img src="@gridImages[2]">
+        </div>
+        <div class="ox-gallery-item" onclick="openLightbox(3)">
+            <img src="@gridImages[3]">
+        </div>
+        <div class="ox-gallery-item" onclick="openLightbox(4)">
+            <img src="@gridImages[4]">
+            <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center">
+                <span class="text-white fw-bold fs-4">+@(allImages.Count > 5 ? allImages.Count - 5 : 0) Photos</span>
+            </div>
+        </div>
+    </div>
 
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="mb-5">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h1 class="fw-bold text-dark mb-0">@Model.Title</h1>
-                </div>
-                <p class="text-muted fs-5"><i class="fas fa-map-marker-alt text-primary me-2"></i> @Model.Address, @Model.City?.Name, @Model.State?.Name</p>
-                <div class="d-flex flex-wrap gap-2 mt-3">
-                    @if (!string.IsNullOrEmpty(Model.Amenities))
+    <div class="ox-main-content">
+        <div class="ox-left-col">
+            <!-- About -->
+            <div class="ox-card p-4 p-lg-5 mb-4 border-0 shadow-sm animate-ox">
+                <h4 class="ox-section-title">About this Stay</h4>
+                <p class="text-muted fs-5 mb-0" style="line-height: 1.8;">
+                    @Model.Description
+                </p>
+            </div>
+
+            <!-- Rent Options -->
+            <div class="ox-card p-4 p-lg-5 mb-4 border-0 shadow-sm animate-ox">
+                <h4 class="ox-section-title">Rent Options</h4>
+                @if (Model.Flats != null)
+                {
+                    foreach (var flat in Model.Flats)
                     {
-                        foreach (var amenity in Model.Amenities.Split(','))
-                        {
-                            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill"><i class="fas fa-check text-success me-2"></i>@amenity.Trim()</span>
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-uppercase text-primary small mb-3" style="letter-spacing: 2px;">@flat.Name (@flat.BhkType)</h6>
+                            @if (flat.Rooms != null)
+                            {
+                                foreach (var room in flat.Rooms)
+                                {
+                                    <div class="ox-package-card">
+                                        <div>
+                                            <h5 class="fw-bold mb-1">@room.SharingType</h5>
+                                            <div class="d-flex gap-2">
+                                                <span class="badge bg-light text-muted fw-bold px-2 py-1 rounded small">Deposit: ₹@room.Deposit.ToString("N0")</span>
+                                                <span class="badge bg-light text-muted fw-bold px-2 py-1 rounded small">Verified</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="fs-3 fw-bold text-primary mb-2">₹@room.Rent.ToString("N0")<small class="text-muted fw-normal" style="font-size: 0.8rem">/mo</small></div>
+                                            <button class="btn btn-primary rounded-pill px-4 fw-bold" onclick="openBookingModal(@room.Id, '@room.SharingType', @room.Rent)">Reserve</button>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+                }
+            </div>
+
+            <!-- Amenities -->
+            <div class="ox-card p-4 p-lg-5 mb-4 border-0 shadow-sm animate-ox">
+                <h4 class="ox-section-title">Stay Amenities</h4>
+                <div class="ox-tabs">
+                    <button class="ox-tab-btn active" onclick="switchAmenities('common', event)">Property</button>
+                    <button class="ox-tab-btn" onclick="switchAmenities('room', event)">Room</button>
+                    <button class="ox-tab-btn" onclick="switchAmenities('food', event)">Services</button>
+                </div>
+                
+                <div id="common-amenities" class="row g-4">
+                    @{
+                        var propAmenities = Model.Amenities?.Split(',') ?? new string[0];
+                        var commonIcons = new Dictionary<string, string> {
+                            { "Washing Machine", "fas fa-tshirt" },
+                            { "Refrigerator", "fas fa-snowflake" },
+                            { "Aqua Guard", "fas fa-tint" },
+                            { "Geyser", "fas fa-hot-tub" },
+                            { "Wi-Fi", "fas fa-wifi" },
+                            { "Cooking and Gas Connections", "fas fa-fire" },
+                            { "Separate Almira", "fas fa-door-closed" },
+                            { "Beds Matters", "fas fa-bed" },
+                            { "Pest control", "fas fa-bug" },
+                            { "Housekeeping services", "fas fa-broom" }
+                        };
+                    }
+                    @foreach (var am in propAmenities)
+                    {
+                        var trimmedAm = am.Trim();
+                        if (!string.IsNullOrEmpty(trimmedAm)) {
+                            <div class="col-md-4 col-6">
+                                <div class="d-flex align-items-center p-3 rounded-4 bg-light border h-100">
+                                    <div class="bg-white rounded-circle p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                        <i class="@(commonIcons.ContainsKey(trimmedAm) ? commonIcons[trimmedAm] : "fas fa-check-circle") text-primary fs-5"></i>
+                                    </div>
+                                    <span class="fw-bold small text-dark">@trimmedAm</span>
+                                </div>
+                            </div>
                         }
                     }
                 </div>
             </div>
 
-            <div class="mb-5">
-                <h4 class="fw-bold mb-3 border-bottom pb-2">About this Property</h4>
-                <p class="text-muted lh-lg">@Model.Description</p>
-            </div>
-
-            <div class="mb-5">
-                <h4 class="fw-bold mb-4 border-bottom pb-2">Room Configurations</h4>
-                <div class="row g-4">
-                    @foreach (var room in Model.Rooms)
-                    {
-                        <div class="col-md-6">
-                            <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
-                                <div class="p-4">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h5 class="fw-bold mb-0">@room.SharingType</h5>
-                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1">Available</span>
-                                    </div>
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between mb-1">
-                                            <span class="text-muted small">Monthly Rent</span>
-                                            <span class="fw-bold text-primary">₹@room.Rent.ToString("N0")</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between">
-                                            <span class="text-muted small">Security Deposit</span>
-                                            <span class="text-dark">₹@room.Deposit.ToString("N0")</span>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Room Specific Amenities -->
-                                    @if(!string.IsNullOrEmpty(room.Amenities)) {
-                                        <div class="mt-3 mb-4">
-                                            <h6 class="small fw-bold text-muted mb-2">Room Features:</h6>
-                                            <div class="d-flex flex-wrap gap-1">
-                                                @foreach(var am in room.Amenities.Split(',')) {
-                                                    <span class="badge bg-light text-dark border-0 small px-2 py-1" style="font-size: 11px;"><i class="fas fa-dot-circle text-primary me-1" style="font-size: 8px;"></i> @am</span>
-                                                }
-                                            </div>
-                                        </div>
-                                    }
-
-                                    <!-- Room Specific Photos -->
-                                    @if(room.Media != null && room.Media.Any(m => m.MediaType == "Image")) {
-                                        <div class="row g-1 mt-2">
-                                            @foreach(var rm in room.Media.Where(m => m.MediaType == "Image").Take(4)) {
-                                                <div class="col-3">
-                                                    <img src="@rm.FilePath" class="rounded w-100" style="height: 45px; object-fit: cover; cursor: pointer;" onclick="openLightboxByPath('@rm.FilePath')">
-                                                </div>
-                                            }
-                                        </div>
-                                    }
-
-                                    <a href="#booking-form" class="btn btn-outline-primary w-100 rounded-pill mt-4">Book This Room</a>
-                                </div>
-                            </div>
-                        </div>
-                    }
+            <!-- Map -->
+            <div class="ox-card p-0 overflow-hidden border-0 shadow-sm animate-ox">
+                <div class="p-4 p-lg-5 pb-0">
+                    <h4 class="ox-section-title">Location</h4>
                 </div>
-            </div>
-
-            <div class="mb-5">
-                <h4 class="fw-bold mb-4 border-bottom pb-2">Property Location</h4>
-                <div class="rounded-4 overflow-hidden shadow-sm" style="height: 400px;">
+                <div style="height: 400px; filter: grayscale(0.2);">
                     <iframe width="100%" height="100%" frameborder="0" style="border:0;" 
                         src="https://maps.google.com/maps?q=@(Uri.EscapeDataString(Model.Address + ", " + Model.City?.Name + ", " + Model.State?.Name))&t=&z=15&ie=UTF8&iwloc=&output=embed" allowfullscreen></iframe>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-4">
-            <div id="booking-form" class="card border-0 shadow rounded-4 sticky-top" style="top: 100px; z-index: 100;">
-                <div class="card-body p-4">
-                    <div class="mb-4">
-                        <span class="text-muted d-block small">Starting from</span>
-                        <h2 class="fw-bold text-primary mb-0">₹@startingPrice.ToString("N0") <small class="text-muted fw-normal fs-6">/ month</small></h2>
+        <!-- Sidebar -->
+        <div class="ox-sidebar">
+            <div class="ox-sticky-widget animate-ox">
+                <div class="text-center mb-4">
+                    <div class="bg-primary-soft p-3 rounded-circle d-inline-block mb-3" style="background: rgba(0, 82, 255, 0.08);">
+                        <i class="fas fa-headset text-primary fs-3"></i>
                     </div>
-
-                    <form asp-action="BookRoom" method="post" class="mb-4">
-                        <input type="hidden" name="propertyId" value="@Model.Id" />
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Room Category</label>
-                            <select name="roomId" class="form-select rounded-3 shadow-none" required>
-                                @foreach (var room in Model.Rooms)
-                                {
-                                    <option value="@room.Id">@room.SharingType (₹@room.Rent.ToString("N0"))</option>
+                    <h4 class="fw-bold mb-1">Expert Assistance</h4>
+                    <p class="text-muted small">Our team will help you find the best bed configuration here.</p>
+                </div>
+                
+                <form asp-action="BookRoom" method="post">
+                    <input type="hidden" name="propertyId" value="@Model.Id" />
+                    <div class="mb-4">
+                        <label class="small fw-bold text-muted mb-2 text-uppercase">Interested In</label>
+                        <select name="roomId" class="form-select fw-bold border-2" required>
+                            <option value="">-- Select Option --</option>
+                            @if (Model.Flats != null)
+                            {
+                                foreach (var flat in Model.Flats)
+                            {
+                                @if (flat.Rooms != null) {
+                                    foreach (var room in flat.Rooms)
+                                    {
+                                        <option value="@room.Id">@flat.Name - @room.SharingType (₹@room.Rent.ToString("N0"))</option>
+                                    }
                                 }
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Your Name</label>
-                            <input type="text" name="fullName" class="form-control rounded-3 shadow-none" placeholder="Enter full name" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Mobile Number</label>
-                            <input type="tel" name="mobileNumber" class="form-control rounded-3 shadow-none" placeholder="10-digit mobile number" required pattern="[0-9]{10}">
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm">Reserve My Bed</button>
-                    </form>
+                            }
+                        }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <input type="text" name="fullName" class="form-control fw-semibold" placeholder="Full Name" required />
+                    </div>
+                    <div class="mb-4">
+                        <input type="tel" name="mobileNumber" class="form-control fw-semibold" placeholder="Mobile Number" required />
+                    </div>
+                    <button type="submit" class="btn-ox w-100 py-3 shadow-lg">Schedule Visit / Book Now</button>
+                </form>
+                
+                <div class="mt-4 pt-4 border-top text-center">
+                    <p class="small text-muted mb-2">Or connect via</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="tel:+919628511173" class="btn btn-outline-success rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;"><i class="fas fa-phone"></i></a>
+                        <a href="https://wa.me/919628511173" class="btn btn-outline-success rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;"><i class="fab fa-whatsapp"></i></a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Lightbox Modal -->
+<!-- Booking Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h4 class="modal-title fw-bold">Reserve Bed</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-4">You are reserving: <span id="modalRoomType" class="text-primary fw-bold"></span> at <span id="modalRoomRent" class="text-primary fw-bold"></span>/mo</p>
+                <form asp-action="BookRoom" method="post">
+                    <input type="hidden" name="propertyId" value="@Model.Id" />
+                    <input type="hidden" name="roomId" id="modalRoomId" />
+                    <div class="mb-3">
+                        <input type="text" name="fullName" class="form-control py-3 fw-semibold" placeholder="Full Name" required />
+                    </div>
+                    <div class="mb-4">
+                        <input type="tel" name="mobileNumber" class="form-control py-3 fw-semibold" placeholder="Mobile Number" required />
+                    </div>
+                    <button type="submit" class="btn-ox w-100">Confirm Interest</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox -->
 <div id="lightbox" class="lightbox" onclick="handleLightboxClick(event)">
     <span class="close-btn" onclick="closeLightbox()">&times;</span>
     <div class="lightbox-content">
-        <img id="lightbox-img" src="" onclick="event.stopPropagation()" onerror="this.src='https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200'">
+        <img id="lightbox-img" src="">
         <a class="prev" onclick="changeImage(-1, event)">&#10094;</a>
         <a class="next" onclick="changeImage(1, event)">&#10095;</a>
     </div>
 </div>
 
 <style>
-    .gallery-item { height: 220px; cursor: pointer; transition: all 0.3s ease; position: relative; }
-    .gallery-item.main { height: 448px; }
-    .gallery-item:hover { filter: brightness(0.85); }
-    .gallery-overlay {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.4); pointer-events: none;
-    }
-    
-    @@media (max-width: 768px) {
-        .gallery-item.main { height: 300px; }
-        .gallery-item { height: 150px; margin-bottom: 8px; }
-    }
-
-    .lightbox {
-        display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%;
-        background-color: rgba(0,0,0,0.9); backdrop-filter: blur(5px);
-    }
-    .lightbox-content {
-        position: relative; margin: auto; display: flex; align-items: center; justify-content: center;
-        height: 100%; width: 100%;
-    }
-    #lightbox-img { max-height: 85vh; max-width: 85%; border-radius: 8px; }
-    .close-btn {
-        position: absolute; top: 30px; right: 40px; color: #fff; font-size: 50px;
-        cursor: pointer; z-index: 10001;
-    }
-    
-    .prev, .next {
-        cursor: pointer; position: absolute; top: 50%; width: auto; padding: 25px;
-        margin-top: -50px; color: white; font-weight: bold; font-size: 40px;
-        transition: 0.3s; user-select: none; text-decoration: none; z-index: 10002;
-    }
-    .next { right: 5%; }
-    .prev { left: 5%; }
-    .prev:hover, .next:hover { color: #primary; background: rgba(255,255,255,0.1); border-radius: 50%; }
+    .lightbox { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
+    .lightbox-content { position: relative; height: 100%; display: flex; align-items: center; justify-content: center; }
+    #lightbox-img { max-height: 85vh; max-width: 85%; border-radius: 12px; }
+    .close-btn { position: absolute; top: 30px; right: 40px; color: #fff; font-size: 50px; cursor: pointer; z-index: 10001; transition: color 0.2s; }
+    .close-btn:hover { color: #ccc; }
+    .prev, .next { cursor: pointer; position: absolute; top: 50%; padding: 20px; color: white; font-weight: bold; font-size: 40px; text-decoration: none; z-index: 10001; }
+    .next { right: 5%; } .prev { left: 5%; }
 </style>
 
 @section Scripts {
     <script>
-        var lightboxImages = @Html.Raw(Json.Serialize(allImages.Count > 0 ? allImages : gridImages));
-        var currentIndex = 0;
+        function switchAmenities(type, event) {
+            if(event) {
+                document.querySelectorAll('.ox-tab-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+            }
+        }
 
+        function openBookingModal(roomId, roomType, rent) {
+            document.getElementById('modalRoomId').value = roomId;
+            document.getElementById('modalRoomType').innerText = roomType;
+            document.getElementById('modalRoomRent').innerText = '₹' + rent.toLocaleString();
+            new bootstrap.Modal(document.getElementById('bookingModal')).show();
+        }
+
+        var lightboxImages = @Html.Raw(Json.Serialize(allImages));
+        var currentIndex = 0;
         function openLightbox(index) {
             currentIndex = index;
             document.getElementById('lightbox-img').src = lightboxImages[currentIndex];
             document.getElementById('lightbox').style.display = "block";
             document.body.style.overflow = 'hidden';
         }
-
-        function openLightboxByPath(path) {
-            var index = lightboxImages.indexOf(path);
-            if (index !== -1) {
-                openLightbox(index);
-            } else {
-                currentIndex = 0;
-                document.getElementById('lightbox-img').src = path;
-                document.getElementById('lightbox').style.display = "block";
-                document.body.style.overflow = 'hidden';
-            }
-        }
-
-        function closeLightbox() {
-            document.getElementById('lightbox').style.display = "none";
+        function closeLightbox() { 
+            document.getElementById('lightbox').style.display = "none"; 
             document.body.style.overflow = 'auto';
         }
-
-        function changeImage(n, event) {
-            if (event) event.stopPropagation();
+        function changeImage(n, e) {
+            if(e) e.stopPropagation();
             currentIndex += n;
             if (currentIndex >= lightboxImages.length) currentIndex = 0;
             if (currentIndex < 0) currentIndex = lightboxImages.length - 1;
             document.getElementById('lightbox-img').src = lightboxImages[currentIndex];
         }
-
-        function handleLightboxClick(e) {
-            if (e.target.id === 'lightbox' || e.target.className === 'lightbox-content') {
-                closeLightbox();
-            }
-        }
-
-        document.addEventListener('keydown', function(e) {
-            if (document.getElementById('lightbox').style.display === "block") {
-                if (e.key === "Escape") closeLightbox();
-                if (e.key === "ArrowLeft") changeImage(-1);
-                if (e.key === "ArrowRight") changeImage(1);
-            }
-        });
+        function handleLightboxClick(e) { if(e.target.id === 'lightbox') closeLightbox(); }
     </script>
 }

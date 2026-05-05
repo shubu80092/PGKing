@@ -4,73 +4,120 @@
     Layout = "_AdminLayout";
 }
 
-<div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-white border-0 pt-4 pb-0">
-        <h5 class="fw-bold mb-0">Room Booking Requests</h5>
-        <p class="text-muted small">Manage and track all bed reservation requests from users.</p>
+<div class="card border-0 shadow-sm rounded-4 animate-fade-in">
+    <div class="card-header bg-white border-0 p-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="fw-bold mb-1">Booking Requests</h5>
+                <p class="text-muted small mb-0">List of all inquiries and bed reservation requests.</p>
+            </div>
+            <div class="bg-primary-soft p-3 rounded-4">
+                <span class="fw-bold text-primary">@Model?.Count() Total Requests</span>
+            </div>
+        </div>
     </div>
-    <div class="card-body">
+    <div class="card-body p-4 pt-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
+            <table id="bookingsTable" class="table table-hover align-middle w-100 border-0">
+                <thead class="bg-light">
                     <tr>
-                        <th>Date</th>
-                        <th>User Details</th>
-                        <th>Property / Room</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th class="border-0 px-4">Inquiry Date</th>
+                        <th class="border-0">Customer Info</th>
+                        <th class="border-0">Property & Room</th>
+                        <th class="border-0">Current Status</th>
+                        <th class="border-0 text-end px-4">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @if (Model != null && Model.Any())
+                    @if (Model != null)
                     {
                         foreach (var item in Model)
                         {
                             <tr>
-                                <td><div class="small text-muted">@item.CreatedAt.ToString("dd MMM yyyy")</div></td>
-                                <td>
-                                    <div class="fw-bold">@item.FullName</div>
-                                    <div class="small text-muted"><i class="fas fa-phone me-1"></i> @item.MobileNumber</div>
+                                <td class="px-4">
+                                    <div class="fw-bold small text-dark">@item.CreatedAt.ToString("dd MMM, yyyy")</div>
+                                    <div class="text-muted small">@item.CreatedAt.ToString("hh:mm tt")</div>
                                 </td>
                                 <td>
-                                    <div class="small fw-semibold">@item.Property?.Title</div>
-                                    <div class="small text-primary">@item.Room?.SharingType</div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary-soft rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: rgba(0, 82, 255, 0.08);">
+                                            <i class="fas fa-user text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">@item.FullName</div>
+                                            <div class="small text-muted fw-semibold">
+                                                <i class="fas fa-phone-alt me-1" style="font-size: 0.7rem;"></i> @item.MobileNumber
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark small">@item.Property?.Title</div>
+                                    <div class="badge bg-light text-primary border px-2 py-1" style="font-size: 0.65rem;">@item.Room?.SharingType</div>
                                 </td>
                                 <td>
                                     @if(item.Status == "Pending") {
-                                        <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">Pending</span>
+                                        <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill fw-bold" style="font-size: 0.65rem;">PENDING</span>
                                     } else if(item.Status == "Confirmed") {
-                                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Confirmed</span>
+                                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold" style="font-size: 0.65rem;">CONFIRMED</span>
                                     } else {
-                                        <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Cancelled</span>
+                                        <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill fw-bold" style="font-size: 0.65rem;">CANCELLED</span>
                                     }
                                 </td>
-                                <td>
+                                <td class="text-end px-4">
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                            Update
+                                        <button class="btn btn-sm btn-light rounded-pill px-3 fw-bold border shadow-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            Manage
                                         </button>
-                                        <ul class="dropdown-menu">
-                                            <li><form asp-action="UpdateBookingStatus" method="post"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" name="status" value="Confirmed" /><button type="submit" class="dropdown-item text-success">Confirm</button></form></li>
-                                            <li><form asp-action="UpdateBookingStatus" method="post"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" name="status" value="Cancelled" /><button type="submit" class="dropdown-item text-danger">Cancel</button></form></li>
-                                            <li><form asp-action="UpdateBookingStatus" method="post"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" name="status" value="Pending" /><button type="submit" class="dropdown-item">Mark Pending</button></form></li>
+                                        <ul class="dropdown-menu shadow border-0 rounded-3 mt-2">
+                                            <li><form asp-action="UpdateBookingStatus" method="post"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" name="status" value="Confirmed" /><button type="submit" class="dropdown-item py-2 fw-semibold text-success"><i class="fas fa-check-circle me-2"></i> Confirm Booking</button></form></li>
+                                            <li><form asp-action="UpdateBookingStatus" method="post"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" name="status" value="Cancelled" /><button type="submit" class="dropdown-item py-2 fw-semibold text-danger"><i class="fas fa-times-circle me-2"></i> Cancel Inquiry</button></form></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><form asp-action="UpdateBookingStatus" method="post"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" name="status" value="Pending" /><button type="submit" class="dropdown-item py-2 fw-semibold"><i class="fas fa-clock me-2"></i> Mark Pending</button></form></li>
                                         </ul>
                                     </div>
                                 </td>
                             </tr>
                         }
                     }
-                    else
-                    {
-                        <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">
-                                <i class="fas fa-calendar-check fs-1 mb-3 d-block"></i>
-                                No booking requests yet.
-                            </td>
-                        </tr>
-                    }
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+<style>
+    /* DataTable Custom Styling to match theme */
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid #E2E8F0;
+        border-radius: 50px;
+        padding: 6px 15px;
+        font-size: 0.85rem;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #0052FF !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 50px;
+    }
+    .dataTables_wrapper .dataTables_info { font-size: 0.85rem; color: #64748B; font-weight: 600; }
+    table.dataTable thead th { border-bottom: 2px solid #F1F5F9 !important; }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#bookingsTable').DataTable({
+                responsive: true,
+                order: [[0, 'desc']], // Sort by date descending
+                pageLength: 10,
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search inquiries...",
+                    lengthMenu: "Show _MENU_ entries"
+                }
+            });
+        });
+    </script>
+}

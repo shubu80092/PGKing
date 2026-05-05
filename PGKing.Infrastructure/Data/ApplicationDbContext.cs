@@ -11,6 +11,8 @@ namespace PGKing.Infrastructure.Data
 
         public DbSet<Property> Properties { get; set; }
         public DbSet<PGRoom> PGRooms { get; set; }
+        public DbSet<Flat> Flats { get; set; }
+        public DbSet<FlatMedia> FlatMedias { get; set; }
         public DbSet<State> States { get; set; }
         public DbSet<City> Cities { get; set; }
         public DbSet<RoomMedia> RoomMedias { get; set; }

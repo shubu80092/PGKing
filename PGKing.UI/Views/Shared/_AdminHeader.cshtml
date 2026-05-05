@@ -1,0 +1,35 @@
+<!-- Top Header -->
+<header class="admin-header bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center shadow-sm sticky-top">
+    <div class="d-flex align-items-center">
+        <button class="btn btn-light rounded-circle me-3 d-lg-none" id="sidebarToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <h5 class="mb-0 fw-bold text-dark">@ViewData["Title"]</h5>
+    </div>
+    
+    <div class="d-flex align-items-center gap-3">
+        <div class="d-none d-md-flex position-relative">
+            <input type="text" class="form-control rounded-pill bg-light border-0 px-4" placeholder="Search data..." style="width: 250px;">
+            <i class="fas fa-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
+        </div>
+        
+        <div class="vr mx-2 text-muted opacity-25"></div>
+        
+        <div class="dropdown">
+            <button class="btn btn-light rounded-pill px-3 py-2 d-flex align-items-center gap-2 border-0" data-bs-toggle="dropdown">
+                <i class="fas fa-bell text-primary"></i>
+                <span class="badge bg-danger rounded-circle p-1" style="font-size: 0.5rem; transform: translate(-5px, -8px);">3</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-3">
+                <li class="px-3 py-2 fw-bold small text-uppercase text-muted">Notifications</li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item py-2" href="#"><i class="fas fa-info-circle me-2 text-primary"></i> New booking request</a></li>
+                <li><a class="dropdown-item py-2" href="#"><i class="fas fa-exclamation-triangle me-2 text-warning"></i> Low occupancy in Flat 101</a></li>
+            </ul>
+        </div>
+
+        <a href="/" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-none d-sm-block">
+            <i class="fas fa-external-link-alt me-2"></i> Visit Site
+        </a>
+    </div>
+</header>

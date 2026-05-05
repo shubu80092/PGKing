@@ -50,9 +50,27 @@
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="Amenities" class="form-label fw-semibold">Amenities (comma separated)</label>
-                        <input asp-for="Amenities" class="form-control rounded-3" placeholder="e.g. WiFi, AC, Food, Laundry, CCTV" />
-                        <div class="form-text small">Enter amenities separated by commas.</div>
+                        <label class="form-label fw-semibold">Amenities</label>
+                        <div class="row g-2">
+                            @{
+                                var allowedAmenities = new[] { 
+                                    "Washing Machine", "Refrigerator", "Aqua Guard", "Geyser", "Wi-Fi", 
+                                    "Cooking and Gas Connections", "Separate Almira", "Beds Matters", 
+                                    "Pest control", "Housekeeping services" 
+                                };
+                            }
+                            @foreach (var am in allowedAmenities)
+                            {
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input amenity-checkbox" type="checkbox" value="@am" id="am-@am.Replace(" ", "")">
+                                        <label class="form-check-label small" for="am-@am.Replace(" ", "")">@am</label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <input type="hidden" asp-for="Amenities" id="AmenitiesHidden" />
+                        <span asp-validation-for="Amenities" class="text-danger small"></span>
                     </div>
 
                     <div class="mb-4">
@@ -104,6 +122,15 @@
                 } else { updateMap(); }
             });
             $('#Address, #CityId, #StateId').on('change keyup', function() { updateMap(); });
+            
+            $('form').submit(function() {
+                var selected = [];
+                $('.amenity-checkbox:checked').each(function() {
+                    selected.push($(this).val());
+                });
+                $('#AmenitiesHidden').val(selected.join(','));
+            });
+
             function updateMap() {
                 var address = $('#Address').val();
                 var city = $('#CityId option:selected').text();

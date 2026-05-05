@@ -1,19 +1,21 @@
 @model IEnumerable<PGKing.Application.Entities.Property>
 @{
-    ViewData["Title"] = "Find Your PG";
+    ViewData["Title"] = "Premium PGs - Explore Options";
     var cities = ViewBag.Cities as List<PGKing.Application.Entities.City>;
 }
 
-<section class="py-5 bg-light" style="margin-top: 60px;">
-    <div class="container">
-        <div class="row align-items-center mb-5">
-            <div class="col-lg-6">
-                <h1 class="fw-bold mb-0">Discover Premium PGs</h1>
-                <p class="text-muted">Find the best accommodations in your preferred city.</p>
-            </div>
-            <div class="col-lg-6">
-                <form asp-action="Properties" method="get" class="d-flex gap-2">
-                    <select name="cityId" class="form-select rounded-pill px-4 shadow-sm" style="width: 200px;">
+<div class="container py-5 mt-5">
+    <!-- Header Section -->
+    <div class="text-center mb-5 pb-4 animate-ox">
+        <h6 class="text-primary fw-bold text-uppercase mb-2" style="letter-spacing: 3px;">Your Journey Starts Here</h6>
+        <h1 class="display-3 fw-bold mb-4">Find Your Perfect <span class="text-gradient">Stay</span></h1>
+        
+        <!-- Premium Search Bar -->
+        <div class="ox-card d-inline-flex p-2 mt-4 shadow-lg border-0" style="border-radius: 100px; max-width: 900px; width: 100%;">
+            <form asp-action="Properties" method="get" class="d-flex flex-column flex-lg-row align-items-center w-100 gap-2">
+                <div class="d-flex align-items-center px-4 py-2 flex-grow-1 border-end-lg" style="min-width: 200px;">
+                    <i class="fas fa-map-marker-alt text-primary me-3 fs-5"></i>
+                    <select name="cityId" class="form-select border-0 bg-transparent fw-bold shadow-none" style="cursor: pointer;">
                         <option value="">All Cities</option>
                         @if (cities != null)
                         {
@@ -23,49 +25,80 @@
                             }
                         }
                     </select>
-                    <input type="text" name="search" class="form-control rounded-pill px-4 shadow-sm" placeholder="Search area or name...">
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Filter</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="row g-4">
-            @if (Model != null && Model.Any())
-            {
-                foreach (var property in Model)
-                {
-                    <div class="col-12 col-md-6 col-lg-4">
-                        <div class="property-card h-100 shadow-sm border-0 rounded-4 overflow-hidden bg-white">
-                            <div class="position-relative" style="height: 220px;">
-                                <img src="@(string.IsNullOrEmpty(property.ImageUrl) ? "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800" : property.ImageUrl)" class="w-100 h-100" style="object-fit: cover;" alt="@property.Title">
-                                <div class="position-absolute top-0 end-0 m-3">
-                                    <span class="badge bg-white text-dark shadow-sm px-3 py-2 rounded-pill"><i class="fas fa-star text-warning me-1"></i>4.8</span>
-                                </div>
-                            </div>
-                            <div class="p-4">
-                                <h5 class="fw-bold mb-1">@property.Title</h5>
-                                <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt text-primary me-2"></i>@property.City?.Name, @property.State?.Name</p>
-                                
-                                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                                    <div>
-                                        <small class="text-muted d-block small">Starting from</small>
-                                        <span class="fw-bold text-primary fs-5">₹@((property.Rooms?.Any() == true) ? property.Rooms.Min(r => r.Rent).ToString("N0") : "0")</span>
-                                    </div>
-                                    <a asp-action="PropertyDetails" asp-route-id="@property.Id" class="btn btn-outline-primary btn-sm rounded-pill px-4">View Details</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-            }
-            else
-            {
-                <div class="col-12 text-center py-5">
-                    <i class="fas fa-search fs-1 text-muted mb-3 d-block"></i>
-                    <h4>No properties matching your criteria.</h4>
-                    <p class="text-muted">Try searching for a different city or area.</p>
                 </div>
-            }
+                <div class="d-flex align-items-center px-4 py-2 flex-grow-1">
+                    <i class="fas fa-search text-muted me-3 fs-5"></i>
+                    <input type="text" name="search" class="form-control border-0 bg-transparent fw-semibold shadow-none" placeholder="Search by area or PG name...">
+                </div>
+                <button type="submit" class="btn-ox py-3 px-5">Search Stays</button>
+            </form>
         </div>
     </div>
-</section>
+
+    <!-- Results Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+        <p class="text-muted mb-0 fw-medium">Showing <span class="text-dark fw-bold">@(Model?.Count() ?? 0)</span> premium properties</p>
+        <div class="d-flex gap-2">
+            <button class="btn btn-light rounded-pill px-3 py-2 small fw-bold border"><i class="fas fa-filter me-2"></i> Filter</button>
+            <button class="btn btn-light rounded-pill px-3 py-2 small fw-bold border"><i class="fas fa-sort me-2"></i> Sort</button>
+        </div>
+    </div>
+
+    <!-- Properties Grid -->
+    <div class="row g-4 pt-2">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var property in Model)
+            {
+                var minRent = property.Flats?.SelectMany(f => f.Rooms).Any() == true 
+                              ? property.Flats.SelectMany(f => f.Rooms).Min(r => r.Rent) 
+                              : 0;
+
+                var displayImg = property.ImageUrl;
+                if (string.IsNullOrEmpty(displayImg)) {
+                    displayImg = property.Media?.FirstOrDefault()?.FilePath 
+                                 ?? property.Flats?.SelectMany(f => f.Media).FirstOrDefault()?.FilePath;
+                }
+                if (string.IsNullOrEmpty(displayImg)) {
+                    displayImg = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800";
+                }
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="ox-card h-100 animate-ox">
+                        <div class="position-relative overflow-hidden" style="height: 260px; border-top-left-radius: 24px; border-top-right-radius: 24px;">
+                            <img src="@displayImg" class="w-100 h-100" style="object-fit: cover; transition: transform 0.6s ease;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                            <div class="position-absolute top-0 start-0 m-3">
+                                <span class="badge bg-white text-primary px-3 py-2 rounded-pill shadow-sm fw-bold border-0" style="font-size: 0.7rem;">Verified Stay</span>
+                            </div>
+                            <div class="position-absolute bottom-0 end-0 m-3">
+                                <span class="badge bg-primary text-white px-3 py-2 rounded-pill shadow-lg fw-bold" style="font-size: 0.75rem;">Premium Listing</span>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h4 class="fw-bold mb-0 text-truncate" style="max-width: 65%;">@property.Title</h4>
+                                <div class="text-primary fw-bold fs-5">
+                                    @if (minRent > 0) {
+                                        @:₹@minRent.ToString("N0")<small class="text-muted fw-normal" style="font-size: 0.7rem">/mo</small>
+                                    } else {
+                                        @:Contact
+                                    }
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-4"><i class="fas fa-location-arrow text-primary me-2"></i> @property.Address, @property.City?.Name</p>
+                            
+                            <div class="d-flex flex-wrap gap-2 mb-4">
+                                <span class="badge bg-light text-muted px-2 py-2 rounded-3 border-0 small"><i class="fas fa-wifi text-primary me-1"></i> Wifi</span>
+                                <span class="badge bg-light text-muted px-2 py-2 rounded-3 border-0 small"><i class="fas fa-snowflake text-primary me-1"></i> AC</span>
+                                <span class="badge bg-light text-muted px-2 py-2 rounded-3 border-0 small"><i class="fas fa-utensils text-primary me-1"></i> Meals</span>
+                                <span class="badge bg-light text-muted px-2 py-2 rounded-3 border-0 small"><i class="fas fa-plus text-primary"></i> 5+ More</span>
+                            </div>
+
+                            <a asp-action="PropertyDetails" asp-route-id="@property.Id" class="btn btn-outline-primary w-100 rounded-pill fw-bold py-2 border-2">Explore Options</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

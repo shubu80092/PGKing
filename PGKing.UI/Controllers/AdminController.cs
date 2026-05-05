@@ -24,25 +24,47 @@ namespace PGKing.UI.Controllers
         public async Task<IActionResult> Dashboard()
         {
             int propertiesCount = 0;
-            int bannersCount = 0;
-            int bookingsCount = 0;
+            int flatsCount = 0;
+            int totalBeds = 0;
+            int occupiedBeds = 0;
+            int pendingBookings = 0;
+            decimal monthlyRevenue = 0;
+
             try
             {
                 propertiesCount = await _context.Properties.CountAsync();
-                bannersCount = await _context.Banners.CountAsync();
-                bookingsCount = await _context.Bookings.CountAsync(b => b.Status == "Pending");
+                flatsCount = await _context.Flats.CountAsync();
+                
+                var rooms = await _context.PGRooms.ToListAsync();
+                totalBeds = rooms.Count;
+                occupiedBeds = rooms.Count(r => r.IsOccupied);
+                
+                pendingBookings = await _context.Bookings.CountAsync(b => b.Status == "Pending");
+                
+                // Real monthly revenue from occupied beds
+                monthlyRevenue = rooms.Where(r => r.IsOccupied).Sum(r => r.Rent);
             }
-            catch
+            catch (Exception ex)
             {
-                propertiesCount = 0;
-                bannersCount = 0;
-                bookingsCount = 0;
+                // Log error if needed
             }
 
             ViewBag.PropertiesCount = propertiesCount;
-            ViewBag.BannersCount = bannersCount;
-            ViewBag.PendingBookingsCount = bookingsCount;
-            return View();
+            ViewBag.FlatsCount = flatsCount;
+            ViewBag.TotalBeds = totalBeds;
+            ViewBag.OccupiedBeds = occupiedBeds;
+            ViewBag.AvailableBeds = totalBeds - occupiedBeds;
+            ViewBag.PendingBookingsCount = pendingBookings;
+            ViewBag.MonthlyRevenue = monthlyRevenue;
+            
+            // Recent bookings
+            var recentBookings = await _context.Bookings
+                .Include(b => b.Property)
+                .OrderByDescending(b => b.CreatedAt)
+                .Take(5)
+                .ToListAsync();
+            
+            return View(recentBookings);
         }
         #endregion
 
@@ -52,7 +74,7 @@ namespace PGKing.UI.Controllers
             try
             {
                 var properties = await _context.Properties
-                    .Include(p => p.Rooms)
+                    .Include(p => p.Flats)
                     .Include(p => p.City)
                     .Include(p => p.State)
                     .ToListAsync();
@@ -144,8 +166,11 @@ namespace PGKing.UI.Controllers
         public async Task<IActionResult> ManageProperty(int id)
         {
             var property = await _context.Properties
-                .Include(p => p.Rooms)
-                    .ThenInclude(r => r.Media)
+                .Include(p => p.Flats)
+                    .ThenInclude(f => f.Rooms)
+                        .ThenInclude(r => r.Media)
+                .Include(p => p.Flats)
+                    .ThenInclude(f => f.Media)
                 .Include(p => p.Media)
                 .Include(p => p.City)
                 .Include(p => p.State)
@@ -200,7 +225,40 @@ namespace PGKing.UI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddRoom(PGRoom room, List<IFormFile> mediaFiles, List<string> selectedAmenities)
+        public async Task<IActionResult> AddFlat(int propertyId, string flatName, string bhkType, List<IFormFile> mediaFiles)
+        {
+            var flat = new Flat
+            {
+                PropertyId = propertyId,
+                Name = flatName,
+                BhkType = bhkType
+            };
+
+            _context.Flats.Add(flat);
+            await _context.SaveChangesAsync();
+
+            if (mediaFiles != null && mediaFiles.Count > 0)
+            {
+                foreach (var file in mediaFiles)
+                {
+                    var filePath = await SaveFile(file, "flats");
+                    var mediaType = file.ContentType.StartsWith("video/") ? "Video" : "Image";
+
+                    _context.FlatMedias.Add(new FlatMedia
+                    {
+                        FlatId = flat.Id,
+                        FilePath = filePath,
+                        MediaType = mediaType
+                    });
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction(nameof(ManageProperty), new { id = propertyId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddRoom(PGRoom room, List<string> selectedAmenities, int propertyId)
         {
             if (selectedAmenities != null && selectedAmenities.Any())
             {
@@ -213,30 +271,33 @@ namespace PGKing.UI.Controllers
                 {
                     _context.PGRooms.Add(room);
                     await _context.SaveChangesAsync();
-
-                    if (mediaFiles != null && mediaFiles.Count > 0)
-                    {
-                        foreach (var file in mediaFiles)
-                        {
-                            var filePath = await SaveFile(file, "rooms");
-                            var mediaType = file.ContentType.StartsWith("video/") ? "Video" : "Image";
-                            
-                            _context.RoomMedias.Add(new RoomMedia
-                            {
-                                PGRoomId = room.Id,
-                                FilePath = filePath,
-                                MediaType = mediaType
-                            });
-                        }
-                        await _context.SaveChangesAsync();
-                    }
                 }
                 catch (Exception ex)
                 {
-                    return RedirectToAction(nameof(ManageProperty), new { id = room.PropertyId, error = "Database Error" });
+                    return RedirectToAction(nameof(ManageProperty), new { id = propertyId, error = "Database Error" });
                 }
             }
-            return RedirectToAction(nameof(ManageProperty), new { id = room.PropertyId });
+            return RedirectToAction(nameof(ManageProperty), new { id = propertyId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteFlat(int id, int propertyId)
+        {
+            var flat = await _context.Flats
+                .Include(f => f.Rooms)
+                .Include(f => f.Media)
+                .FirstOrDefaultAsync(f => f.Id == id);
+
+            if (flat != null)
+            {
+                foreach (var m in flat.Media)
+                {
+                    DeleteFile(m.FilePath);
+                }
+                _context.Flats.Remove(flat);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(ManageProperty), new { id = propertyId });
         }
 
         [HttpPost]
@@ -250,6 +311,18 @@ namespace PGKing.UI.Controllers
                     DeleteFile(m.FilePath);
                 }
                 _context.PGRooms.Remove(room);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(ManageProperty), new { id = propertyId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ToggleRoomStatus(int roomId, int propertyId)
+        {
+            var room = await _context.PGRooms.FindAsync(roomId);
+            if (room != null)
+            {
+                room.IsOccupied = !room.IsOccupied;
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(ManageProperty), new { id = propertyId });

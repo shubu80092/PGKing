@@ -18,7 +18,7 @@
         <nav class="navbar navbar-expand-lg navbar-light fixed-top">
             <div class="container">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <img src="~/images/logo.png" alt="PGKing Logo" height="100">
+                    <img src="~/images/logo.png" alt="PGKing Logo" height="60">
                 </a>
                 <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav"
                         aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@
         </nav>
     </header>
     
-    <main role="main" style="padding-top: 150px;">
+    <main role="main" style="padding-top: 100px;">
         @RenderBody()
     </main>
 
@@ -67,9 +67,9 @@
                 </div>
                 <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mb-md-0 mb-4">
                     <h6 class="text-uppercase fw-bold mb-4">Contact</h6>
-                    <p><i class="fas fa-home me-3"></i> Mumbai, Maharashtra, India</p>
+                    <p><i class="fas fa-home me-3"></i> A- 129, First Floor, PG KING , BMC MARKET , 78 Business Park, Station Road , Bhandup West , Mumbai 400078</p>
                     <p><i class="fas fa-envelope me-3"></i> info@pgking.in</p>
-                    <p><i class="fas fa-phone me-3"></i> +91 98765 43210</p>
+                    <p><i class="fas fa-phone me-3"></i> +91 96285 11173</p>
                 </div>
             </div>
         </div>
@@ -81,6 +81,15 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        $(window).scroll(function() {
+            if ($(this).scrollTop() > 50) {
+                $('.navbar').addClass('scrolled');
+            } else {
+                $('.navbar').removeClass('scrolled');
+            }
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

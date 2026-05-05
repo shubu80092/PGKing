@@ -4,66 +4,108 @@
     Layout = "_AdminLayout";
 }
 
-<div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
-        <h5 class="fw-bold mb-0">Home Page Banners</h5>
-        <a asp-action="CreateBanner" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i> Add Banner</a>
+<div class="card border-0 shadow-sm rounded-4 animate-fade-in">
+    <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold mb-1">Homepage Banners</h5>
+            <p class="text-muted small mb-0">Manage the hero carousel images and marketing text.</p>
+        </div>
+        <a asp-action="CreateBanner" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+            <i class="fas fa-plus-circle me-2"></i> Add New Banner
+        </a>
     </div>
-    <div class="card-body">
+    <div class="card-body p-4 pt-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
+            <table id="bannersTable" class="table table-hover align-middle w-100 border-0">
+                <thead class="bg-light">
                     <tr>
-                        <th>Order</th>
-                        <th>Preview</th>
-                        <th>Title / Subtitle</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th class="border-0 px-4" style="width: 80px;">Order</th>
+                        <th class="border-0">Banner Preview</th>
+                        <th class="border-0">Content Details</th>
+                        <th class="border-0 text-center">Status</th>
+                        <th class="border-0 text-end px-4">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @if (Model != null && Model.Any())
+                    @if (Model != null)
                     {
                         foreach (var item in Model)
                         {
                             <tr>
-                                <td><span class="badge bg-light text-dark border">@item.DisplayOrder</span></td>
-                                <td>
-                                    <img src="@item.ImageUrl" class="rounded" style="width: 120px; height: 60px; object-fit: cover;" />
+                                <td class="px-4">
+                                    <div class="bg-light rounded-circle fw-bold text-dark d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; font-size: 0.8rem;">
+                                        @item.DisplayOrder
+                                    </div>
                                 </td>
                                 <td>
-                                    <div class="fw-bold">@item.Title</div>
-                                    <div class="small text-muted text-truncate" style="max-width: 300px;">@item.SubTitle</div>
+                                    <div class="position-relative">
+                                        <img src="@item.ImageUrl" class="rounded-3 shadow-sm" style="width: 140px; height: 70px; object-fit: cover;" />
+                                    </div>
                                 </td>
                                 <td>
+                                    <div class="fw-bold text-dark">@item.Title</div>
+                                    <div class="text-muted small text-truncate" style="max-width: 250px;">@item.SubTitle</div>
+                                </td>
+                                <td class="text-center">
                                     @if(item.IsActive) {
-                                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Active</span>
+                                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold" style="font-size: 0.65rem;">ACTIVE</span>
                                     } else {
-                                        <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Hidden</span>
+                                        <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill fw-bold" style="font-size: 0.65rem;">HIDDEN</span>
                                     }
                                 </td>
-                                <td>
-                                    <div class="btn-group">
-                                        <a asp-action="EditBanner" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning mx-1"><i class="fas fa-edit"></i></a>
+                                <td class="text-end px-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a asp-action="EditBanner" asp-route-id="@item.Id" class="btn btn-sm btn-light border rounded-pill px-3 fw-bold shadow-sm">
+                                            <i class="fas fa-edit me-1 text-warning"></i> Edit
+                                        </a>
                                         <form asp-action="DeleteBanner" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Delete this banner?')">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2 fw-bold shadow-sm text-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
                                         </form>
                                     </div>
                                 </td>
                             </tr>
                         }
                     }
-                    else
-                    {
-                        <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">
-                                <i class="fas fa-images fs-1 mb-3 d-block"></i>
-                                No banners found. Create your first homepage banner.
-                            </td>
-                        </tr>
-                    }
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+<style>
+    /* DataTable Custom Styling to match theme */
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid #E2E8F0;
+        border-radius: 50px;
+        padding: 6px 15px;
+        font-size: 0.85rem;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #0052FF !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 50px;
+    }
+    .dataTables_wrapper .dataTables_info { font-size: 0.85rem; color: #64748B; font-weight: 600; }
+    table.dataTable thead th { border-bottom: 2px solid #F1F5F9 !important; }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#bannersTable').DataTable({
+                responsive: true,
+                order: [[0, 'asc']],
+                pageLength: 5,
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search banners...",
+                    lengthMenu: "Show _MENU_"
+                }
+            });
+        });
+    </script>
+}

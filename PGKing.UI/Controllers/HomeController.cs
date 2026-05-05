@@ -27,12 +27,17 @@ namespace PGKing.UI.Controllers
             var properties = await _context.Properties
                 .Include(p => p.City)
                 .Include(p => p.State)
-                .Include(p => p.Rooms)
+                .Include(p => p.Media)
+                .Include(p => p.Flats)
+                    .ThenInclude(f => f.Rooms)
+                .Include(p => p.Flats)
+                    .ThenInclude(f => f.Media)
                 .Take(6)
                 .ToListAsync();
 
             ViewBag.Banners = banners;
             ViewBag.Properties = properties;
+            ViewBag.Cities = await _context.Cities.ToListAsync();
 
             return View();
         }
@@ -42,7 +47,11 @@ namespace PGKing.UI.Controllers
             var query = _context.Properties
                 .Include(p => p.City)
                 .Include(p => p.State)
-                .Include(p => p.Rooms)
+                .Include(p => p.Media)
+                .Include(p => p.Flats)
+                    .ThenInclude(f => f.Rooms)
+                .Include(p => p.Flats)
+                    .ThenInclude(f => f.Media)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(search))
@@ -67,8 +76,10 @@ namespace PGKing.UI.Controllers
                 .Include(p => p.City)
                 .Include(p => p.State)
                 .Include(p => p.Media) // Include property gallery
-                .Include(p => p.Rooms)
-                    .ThenInclude(r => r.Media) // Include room gallery
+                .Include(p => p.Flats)
+                    .ThenInclude(f => f.Rooms)
+                .Include(p => p.Flats)
+                    .ThenInclude(f => f.Media) // Include flat gallery
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (property == null) return NotFound();

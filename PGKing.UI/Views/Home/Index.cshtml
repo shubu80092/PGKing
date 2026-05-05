@@ -1,12 +1,12 @@
 @using PGKing.Application.Entities
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "PGKing - Premium Living Spaces";
     var banners = ViewBag.Banners as List<Banner>;
     var properties = ViewBag.Properties as List<Property>;
 }
 
-<!-- Dynamic Hero/Banner Section -->
-<section class="hero-section position-relative p-0 overflow-hidden">
+<!-- Hero Section -->
+<section class="hero-section position-relative overflow-hidden" style="height: 90vh; min-height: 700px;">
     @if (banners != null && banners.Any())
     {
         <div id="homeCarousel" class="carousel slide carousel-fade h-100" data-bs-ride="carousel">
@@ -14,199 +14,164 @@
                 @for (int i = 0; i < banners.Count; i++)
                 {
                     <div class="carousel-item @(i == 0 ? "active" : "") h-100">
-                        <div class="banner-overlay"></div>
-                        <img src="@banners[i].ImageUrl" class="d-block w-100 h-100" style="object-fit: cover;" alt="@banners[i].Title">
-                        <div class="carousel-caption d-flex flex-column justify-content-center h-100 text-start animate-fade-in">
-                            <div class="container">
-                                <div class="row">
-                                    <div class="col-lg-8">
-                                        <h1 class="hero-title mb-3">@banners[i].Title</h1>
-                                        <p class="hero-subtitle mb-4">@banners[i].SubTitle</p>
-                                        <div class="d-flex gap-3">
-                                            <a href="#properties" class="btn btn-warning rounded-pill px-5 py-3 fw-bold shadow">Explore Now</a>
-                                            <a href="#" class="btn btn-outline-light rounded-pill px-5 py-3 fw-bold">Contact Us</a>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(to right, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.3) 100%); z-index: 1;"></div>
+                        <img src="@banners[i].ImageUrl" class="d-block w-100 h-100" style="object-fit: cover;">
+                        <div class="carousel-caption d-flex flex-column justify-content-center h-100 text-start animate-ox" style="bottom: 0; left: 10%; right: 10%; z-index: 2;">
+                            <h1 class="display-1 mb-3" style="font-weight: 900; letter-spacing: -3px;">@banners[i].Title</h1>
+                            <p class="fs-4 mb-5 opacity-90" style="max-width: 600px; font-weight: 500;">@banners[i].SubTitle</p>
+                            <div class="d-flex gap-3">
+                                <a href="#properties" class="btn-ox text-decoration-none">Discover Now</a>
+                                <a href="/Home/AboutUs" class="btn-ox-outline text-white border-white text-decoration-none">Learn More</a>
                             </div>
                         </div>
                     </div>
                 }
             </div>
-            @if(banners.Count > 1) {
-                <button class="carousel-control-prev" type="button" data-bs-target="#homeCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#homeCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                </button>
-            }
-        </div>
-    }
-    else
-    {
-        <!-- Fallback if no banners -->
-        <div class="container py-5 text-center animate-fade-in" style="margin-top: 150px;">
-            <h1 class="hero-title">Welcome to <img src="~/images/logo.png" alt="PGKing" height="250"></h1>
-            <p class="hero-subtitle">Premium Living Spaces for Everyone</p>
-            <a href="#properties" class="btn btn-warning rounded-pill px-5 py-3 fw-bold shadow mt-4">Explore Properties</a>
         </div>
     }
 </section>
 
-<!-- Search Bar Overlay (Optional design enhancement) -->
-<div class="container position-relative" style="margin-top: -50px; z-index: 10;">
-    <div class="bg-white p-3 rounded-4 shadow-lg mx-auto" style="max-width: 900px; border: 1px solid #e5e7eb;">
-        <div class="row g-2 align-items-center">
-            <div class="col-md-5">
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-0"><i class="fas fa-search text-primary"></i></span>
-                    <input type="text" class="form-control border-0 px-1" placeholder="Search by area or city..." style="box-shadow: none;">
+<!-- Search Overlay -->
+<div class="container px-4">
+    <div class="ox-card p-4 p-lg-5 animate-ox" style="margin-top: -100px; position: relative; z-index: 100; border: none; box-shadow: 0 30px 60px rgba(0,0,0,0.12);">
+        <form asp-action="Properties" method="get" class="row g-4 align-items-center">
+            <div class="col-lg-4">
+                <label class="small fw-bold text-muted mb-2 d-block px-1 text-uppercase">Where would you like to stay?</label>
+                <div class="d-flex align-items-center bg-light p-3 rounded-4">
+                    <i class="fas fa-search text-primary ms-2 me-3"></i>
+                    <input type="text" name="search" class="form-control border-0 bg-transparent shadow-none p-0 fw-semibold" placeholder="Locality, Landmark or PG Name">
                 </div>
             </div>
-            <div class="col-md-3">
-                <select class="form-select border-0 text-muted" style="box-shadow: none;">
-                    <option selected>All Types</option>
-                    <option>Boys PG</option>
-                    <option>Girls PG</option>
-                    <option>Co-living</option>
-                </select>
+            <div class="col-lg-3">
+                <label class="small fw-bold text-muted mb-2 d-block px-1 text-uppercase">I am looking for</label>
+                <div class="d-flex align-items-center bg-light p-3 rounded-4">
+                    <i class="fas fa-user-friends text-primary ms-2 me-3"></i>
+                    <select class="form-select border-0 bg-transparent shadow-none p-0 fw-semibold">
+                        <option>Any PG Type</option>
+                        <option>Boys PG</option>
+                        <option>Girls PG</option>
+                        <option>Co-living</option>
+                    </select>
+                </div>
             </div>
-            <div class="col-md-2">
-                <select class="form-select border-0 text-muted" style="box-shadow: none;">
-                    <option selected>Budget</option>
-                    <option>₹5k - ₹10k</option>
-                    <option>₹10k - ₹15k</option>
-                    <option>₹15k+</option>
-                </select>
+            <div class="col-lg-3">
+                <label class="small fw-bold text-muted mb-2 d-block px-1 text-uppercase">Select City</label>
+                <div class="d-flex align-items-center bg-light p-3 rounded-4">
+                    <i class="fas fa-map-marker-alt text-primary ms-2 me-3"></i>
+                    <select name="cityId" class="form-select border-0 bg-transparent shadow-none p-0 fw-semibold">
+                        <option value="">All Cities</option>
+                        @if (ViewBag.Cities != null)
+                        {
+                            foreach (var city in (List<City>)ViewBag.Cities)
+                            {
+                                <option value="@city.Id">@city.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
             </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary w-100 rounded-3 py-2">Search</button>
+            <div class="col-lg-2">
+                <label class="d-none d-lg-block mb-2">&nbsp;</label>
+                <button type="submit" class="btn-ox w-100 py-3">Find Stays</button>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
-<!-- Featured Properties Section -->
+<!-- Featured Section -->
 <section id="properties" class="py-5 my-5">
     <div class="container">
         <div class="text-center mb-5">
-            <h6 class="text-primary fw-bold text-uppercase tracking-wide">Featured Properties</h6>
-            <h2 class="fw-bold fs-1 text-dark">Explore Our Top Picks</h2>
-            <div class="d-flex justify-content-center mt-3">
-                <div class="bg-primary rounded-pill" style="width: 60px; height: 4px;"></div>
-            </div>
+            <h6 class="text-primary fw-bold text-uppercase mb-2" style="letter-spacing: 3px;">Exclusive Collection</h6>
+            <h2 class="display-4 fw-bold">Featured Properties</h2>
+            <div class="mx-auto bg-primary mt-3" style="width: 60px; height: 4px; border-radius: 2px;"></div>
         </div>
         
-        <div class="row g-4">
+        <div class="row g-4 pt-4">
             @if (properties != null && properties.Any())
             {
                 foreach (var property in properties)
                 {
-                    <div class="col-12 col-md-6 col-lg-4">
-                        <div class="property-card h-100">
-                            <div class="position-relative">
-                                <img src="@(string.IsNullOrEmpty(property.ImageUrl) ? "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800" : property.ImageUrl)" alt="@property.Title" class="property-img">
-                                <div class="position-absolute top-0 end-0 m-3">
-                                    <span class="badge bg-white text-dark shadow-sm px-3 py-2 rounded-pill"><i class="fas fa-star text-warning me-1"></i>4.8</span>
+                    var minRent = property.Flats?.SelectMany(f => f.Rooms).Any() == true 
+                                  ? property.Flats.SelectMany(f => f.Rooms).Min(r => r.Rent) 
+                                  : 0;
+                    
+                    var displayImg = property.ImageUrl;
+                    if (string.IsNullOrEmpty(displayImg)) {
+                        displayImg = property.Media?.FirstOrDefault()?.FilePath 
+                                     ?? property.Flats?.SelectMany(f => f.Media).FirstOrDefault()?.FilePath;
+                    }
+                    if (string.IsNullOrEmpty(displayImg)) {
+                        displayImg = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800";
+                    }
+
+                    <div class="col-lg-4 col-md-6">
+                        <div class="ox-card h-100 animate-ox">
+                            <div class="position-relative overflow-hidden" style="height: 280px; border-top-left-radius: 24px; border-top-right-radius: 24px;">
+                                <img src="@displayImg" class="w-100 h-100" style="object-fit: cover; transition: transform 0.6s ease;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                                <div class="position-absolute top-0 end-0 m-4">
+                                    <span class="badge bg-white text-dark shadow-sm px-3 py-2 rounded-pill fw-bold" style="font-size: 0.75rem;"><i class="fas fa-check-circle text-primary me-1"></i> Verified</span>
                                 </div>
                             </div>
-                            <div class="property-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h3 class="property-title">@property.Title</h3>
+                            <div class="p-4">
+                                <h4 class="mb-2">@property.Title</h4>
+                                <div class="mb-3 d-flex gap-2">
+                                    <span class="badge bg-light text-muted fw-bold px-3 py-2 rounded-pill" style="font-size: 0.7rem;"><i class="fas fa-bed me-1 text-primary"></i> @(property.Flats?.SelectMany(f => f.Rooms).Count() ?? 0) Options</span>
+                                    <span class="badge bg-light text-muted fw-bold px-3 py-2 rounded-pill" style="font-size: 0.7rem;"><i class="fas fa-shield-alt me-1 text-primary"></i> Premium</span>
                                 </div>
-                                <p class="property-location small text-muted"><i class="fas fa-map-marker-alt text-primary me-2"></i>@property.Address, @property.City?.Name, @property.State?.Name</p>
+                                <p class="text-muted small mb-4"><i class="fas fa-location-arrow text-primary me-2"></i> @property.Address</p>
                                 
-                                <div class="d-flex flex-wrap gap-2 mb-3">
-                                    <span class="badge bg-light text-dark border"><i class="fas fa-bed me-1 text-muted"></i> @(property.Rooms?.Count ?? 0) Room Options</span>
-                                </div>
-                                
-                                <hr class="text-muted opacity-25">
-                                
-                                <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
                                     <div>
-                                        <small class="text-muted d-block">Starting from</small>
-                                        <span class="property-price">₹@((property.Rooms?.Any() == true) ? property.Rooms.Min(r => r.Rent).ToString("N0") : "0")<small class="fs-6 fw-normal text-muted">/mo</small></span>
+                                        <small class="text-muted d-block" style="font-size: 0.7rem; font-weight: 600; text-uppercase;">Starts from</small>
+                                        <span class="fw-bold text-primary fs-4">@(minRent > 0 ? "₹" + minRent.ToString("N0") : "Contact")</span>
                                     </div>
-                                    <a asp-action="PropertyDetails" asp-route-id="@property.Id" class="btn btn-primary rounded-pill px-4">View Details</a>
+                                    <a asp-action="PropertyDetails" asp-route-id="@property.Id" class="btn btn-primary rounded-pill px-4 fw-bold">View Stay</a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 }
             }
-            else
-            {
-                <div class="col-12 text-center py-5">
-                    <p class="text-muted fs-5">No properties found. Please check back later!</p>
-                </div>
-            }
+        </div>
+        <div class="text-center mt-5 pt-4">
+            <a asp-action="Properties" class="btn-ox-outline text-decoration-none">Explore All Properties <i class="fas fa-arrow-right ms-2"></i></a>
         </div>
     </div>
 </section>
 
-<!-- Why Choose Us -->
-<section class="bg-light py-5">
-    <div class="container py-4">
-        <div class="row align-items-center">
-            <div class="col-lg-6 mb-4 mb-lg-0">
-                <img src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=1000" class="img-fluid rounded-4 shadow-lg" alt="Amenities">
+<!-- Features Section -->
+<section class="py-5 bg-white">
+    <div class="container py-5">
+        <div class="row g-5">
+            <div class="col-lg-3 col-md-6 text-center">
+                <div class="bg-primary-soft text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; background: rgba(0, 82, 255, 0.08);">
+                    <i class="fas fa-shield-alt fs-2"></i>
+                </div>
+                <h5 class="fw-bold">Secured Living</h5>
+                <p class="text-muted small px-3">24/7 Security, CCTV, and verified residents for peace of mind.</p>
             </div>
-            <div class="col-lg-6 ps-lg-5">
-                <h6 class="text-primary fw-bold text-uppercase tracking-wide">Premium Living</h6>
-                <h2 class="fw-bold fs-1 mb-4">Why <img src="~/images/logo.png" alt="PGKing" height="120"> is Your Best Choice</h2>
-                
-                <div class="d-flex mb-4">
-                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3 text-primary p-4" style="height: 60px; width: 60px;">
-                        <i class="fas fa-shield-alt fs-4"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold">Safe & Secure</h5>
-                        <p class="text-muted small">CCTV surveillance, bio-metric entry, and 24/7 guard presence for your peace of mind.</p>
-                    </div>
+            <div class="col-lg-3 col-md-6 text-center">
+                <div class="bg-primary-soft text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; background: rgba(0, 82, 255, 0.08);">
+                    <i class="fas fa-wifi fs-2"></i>
                 </div>
-
-                <div class="d-flex mb-4">
-                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3 text-primary p-4" style="height: 60px; width: 60px;">
-                        <i class="fas fa-utensils fs-4"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold">Delicious Food</h5>
-                        <p class="text-muted small">Hygienic, home-style meals served daily to keep you healthy and happy.</p>
-                    </div>
+                <h5 class="fw-bold">Hyper-Connected</h5>
+                <p class="text-muted small px-3">Blazing fast internet connectivity in every corner of the stay.</p>
+            </div>
+            <div class="col-lg-3 col-md-6 text-center">
+                <div class="bg-primary-soft text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; background: rgba(0, 82, 255, 0.08);">
+                    <i class="fas fa-utensils fs-2"></i>
                 </div>
-
-                <div class="d-flex">
-                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3 text-primary p-4" style="height: 60px; width: 60px;">
-                        <i class="fas fa-broom fs-4"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold">Regular Housekeeping</h5>
-                        <p class="text-muted small">Daily room cleaning and weekly linen change to maintain high hygiene standards.</p>
-                    </div>
+                <h5 class="fw-bold">Gourmet Meals</h5>
+                <p class="text-muted small px-3">Nutritious, home-style hygiene-focused meals served daily.</p>
+            </div>
+            <div class="col-lg-3 col-md-6 text-center">
+                <div class="bg-primary-soft text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; background: rgba(0, 82, 255, 0.08);">
+                    <i class="fas fa-broom fs-2"></i>
                 </div>
+                <h5 class="fw-bold">Expert Clean</h5>
+                <p class="text-muted small px-3">Professional housekeeping services to keep your stay spotless.</p>
             </div>
         </div>
     </div>
 </section>
-
-<style>
-    .carousel-item { height: 600px; }
-    .banner-overlay {
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.7));
-        z-index: 1;
-    }
-    .carousel-caption { z-index: 2; padding-bottom: 100px; }
-    .hero-title { font-size: 3.5rem; font-weight: 800; line-height: 1.2; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-    .hero-subtitle { font-size: 1.25rem; max-width: 600px; text-shadow: 0 1px 5px rgba(0,0,0,0.3); }
-    
-    @@media (max-width: 768px) {
-        .carousel-item { height: 500px; }
-        .hero-title { font-size: 2.2rem; }
-        .hero-subtitle { font-size: 1rem; }
-    }
-</style>

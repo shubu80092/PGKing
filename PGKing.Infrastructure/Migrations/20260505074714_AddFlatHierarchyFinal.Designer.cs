@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PGKing.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using PGKing.Infrastructure.Data;
 namespace PGKing.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260505074714_AddFlatHierarchyFinal")]
+    partial class AddFlatHierarchyFinal
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -229,9 +232,6 @@ namespace PGKing.Infrastructure.Migrations
 
                     b.Property<int?>("FlatId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("IsOccupied")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<decimal>("Rent")
                         .HasColumnType("decimal(65,30)");
