@@ -24,7 +24,9 @@ COPY --from=build /app/publish .
 
 # Enable globalization invariant mode to prevent crashes on some Linux distros
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=true
+ENV ASPNETCORE_URLS=http://+:80
 
 # Set the entry point
 ENTRYPOINT ["dotnet", "PGKing.UI.dll"]
+
 
