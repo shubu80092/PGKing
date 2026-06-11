@@ -2,6 +2,12 @@
 @{
     ViewData["Title"] = "Manage Property Hierarchy";
     Layout = "_AdminLayout";
+
+    var roomAmenities = new string[] { 
+        "Washing Machine", "Refrigerator", "Aqua Guard", "Geyser", "Wi-Fi", 
+        "Cooking and Gas Connections", "Separate Almira", "Beds Matters", 
+        "Pest control", "Housekeeping services" 
+    };
 }
 
 <div class="d-flex justify-content-between mb-3">
@@ -175,11 +181,22 @@
                                                             </form>
                                                         </td>
                                                         <td class="text-end">
-                                                            <form asp-action="DeleteRoom" method="post">
-                                                                <input type="hidden" name="id" value="@room.Id" />
-                                                                <input type="hidden" name="propertyId" value="@Model.Id" />
-                                                                <button type="submit" class="btn btn-link text-danger p-0"><i class="fas fa-times"></i></button>
-                                                            </form>
+                                                            <div class="d-flex justify-content-end align-items-center gap-2">
+                                                                <button type="button" 
+                                                                        class="btn btn-link text-primary p-0 btn-edit-room" 
+                                                                        data-id="@room.Id" 
+                                                                        data-sharing-type="@room.SharingType" 
+                                                                        data-rent="@room.Rent" 
+                                                                        data-deposit="@room.Deposit" 
+                                                                        data-amenities="@room.Amenities">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
+                                                                <form asp-action="DeleteRoom" method="post" class="m-0">
+                                                                    <input type="hidden" name="id" value="@room.Id" />
+                                                                    <input type="hidden" name="propertyId" value="@Model.Id" />
+                                                                    <button type="submit" class="btn btn-link text-danger p-0"><i class="fas fa-times"></i></button>
+                                                                </form>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 }
@@ -227,13 +244,7 @@
                     <div class="mb-4">
                         <label class="form-label fw-bold small d-block mb-3">Room Amenities</label>
                         <div class="row g-2">
-                            @{
-                                var roomAmenities = new string[] { 
-                                    "Washing Machine", "Refrigerator", "Aqua Guard", "Geyser", "Wi-Fi", 
-                                    "Cooking and Gas Connections", "Separate Almira", "Beds Matters", 
-                                    "Pest control", "Housekeeping services" 
-                                };
-                            }
+                            
                             @foreach (var am in roomAmenities)
                             {
                                 <div class="col-md-4 col-6">
@@ -255,10 +266,86 @@
     </div>
 </div>
 
+<!-- Edit Bed Modal -->
+<div class="modal fade" id="editBedModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i> Edit Bed Configuration</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form asp-action="EditRoom" method="post">
+                    <input type="hidden" name="Id" id="editModalRoomId" />
+                    <input type="hidden" name="propertyId" value="@Model.Id" />
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <label class="form-label fw-bold small">Sharing / Bed Type</label>
+                            <input type="text" name="SharingType" id="editModalSharingType" class="form-control rounded-3" placeholder="e.g. Master Bedroom Double Sharing" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Monthly Rent (₹)</label>
+                            <input type="number" name="Rent" id="editModalRent" class="form-control rounded-3" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Deposit (₹)</label>
+                            <input type="number" name="Deposit" id="editModalDeposit" class="form-control rounded-3" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small d-block mb-3">Room Amenities</label>
+                        <div class="row g-2">
+                            @foreach (var am in roomAmenities)
+                            {
+                                <div class="col-md-4 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="selectedAmenities" value="@am" id="edit_am_@am.Replace(" ", "_")">
+                                        <label class="form-check-label small" for="edit_am_@am.Replace(" ", "_")">@am</label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary px-5 rounded-pill fw-bold">Update Bed Detail</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     function showAddBedForm(flatId, flatName) {
         document.getElementById('modalFlatId').value = flatId;
         document.getElementById('modalFlatName').innerText = flatName;
         new bootstrap.Modal(document.getElementById('addBedModal')).show();
     }
+
+    document.querySelectorAll('.btn-edit-room').forEach(button => {
+        button.addEventListener('click', function() {
+            const roomId = this.getAttribute('data-id');
+            const sharingType = this.getAttribute('data-sharing-type');
+            const rent = this.getAttribute('data-rent');
+            const deposit = this.getAttribute('data-deposit');
+            const amenitiesStr = this.getAttribute('data-amenities') || '';
+            const amenities = amenitiesStr.split(',').map(a => a.trim());
+
+            document.getElementById('editModalRoomId').value = roomId;
+            document.getElementById('editModalSharingType').value = sharingType;
+            document.getElementById('editModalRent').value = rent;
+            document.getElementById('editModalDeposit').value = deposit;
+
+            // Reset and check matching checkboxes
+            const checkboxes = document.querySelectorAll('#editBedModal input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = amenities.includes(cb.value);
+            });
+
+            new bootstrap.Modal(document.getElementById('editBedModal')).show();
+        });
+    });
 </script>

@@ -282,6 +282,41 @@ namespace PGKing.UI.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> EditRoom(PGRoom room, List<string> selectedAmenities, int propertyId)
+        {
+            if (selectedAmenities != null && selectedAmenities.Any())
+            {
+                room.Amenities = string.Join(",", selectedAmenities);
+            }
+            else
+            {
+                room.Amenities = string.Empty;
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var existingRoom = await _context.PGRooms.FindAsync(room.Id);
+                    if (existingRoom == null) return NotFound();
+
+                    existingRoom.SharingType = room.SharingType;
+                    existingRoom.Rent = room.Rent;
+                    existingRoom.Deposit = room.Deposit;
+                    existingRoom.Amenities = room.Amenities;
+
+                    _context.PGRooms.Update(existingRoom);
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    return RedirectToAction(nameof(ManageProperty), new { id = propertyId, error = "Database Error" });
+                }
+            }
+            return RedirectToAction(nameof(ManageProperty), new { id = propertyId });
+        }
+
+        [HttpPost]
         public async Task<IActionResult> DeleteFlat(int id, int propertyId)
         {
             var flat = await _context.Flats
