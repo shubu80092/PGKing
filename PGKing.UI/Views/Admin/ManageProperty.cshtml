@@ -137,6 +137,17 @@
                                 }
                             </div>
 
+                            <!-- Add Flat Images Form -->
+                            <form asp-action="AddFlatImages" method="post" enctype="multipart/form-data" class="mb-3">
+                                <input type="hidden" name="flatId" value="@flat.Id" />
+                                <input type="hidden" name="propertyId" value="@Model.Id" />
+                                <div class="input-group input-group-sm mb-2" style="max-width: 450px;">
+                                    <label class="input-group-text bg-light border-light-subtle small text-muted">Add Flat Images</label>
+                                    <input type="file" name="flatFiles" class="form-control" multiple accept="image/*,video/*" required>
+                                    <button class="btn btn-primary" type="submit">Upload</button>
+                                </div>
+                            </form>
+
                             <!-- Beds List in this Flat -->
                             <div class="bg-light rounded-4 p-3">
                                 <h6 class="fw-bold small mb-3 text-muted">Bed / Sharing Configurations:</h6>

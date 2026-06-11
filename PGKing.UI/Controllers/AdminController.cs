@@ -401,6 +401,28 @@ namespace PGKing.UI.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> AddFlatImages(int flatId, List<IFormFile> flatFiles, int propertyId)
+        {
+            if (flatFiles != null && flatFiles.Count > 0)
+            {
+                foreach (var file in flatFiles)
+                {
+                    var filePath = await _storageService.SaveFileAsync(file, "flats");
+                    var mediaType = file.ContentType.StartsWith("video/") ? "Video" : "Image";
+
+                    _context.FlatMedias.Add(new FlatMedia
+                    {
+                        FlatId = flatId,
+                        FilePath = filePath,
+                        MediaType = mediaType
+                    });
+                }
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(ManageProperty), new { id = propertyId });
+        }
+
+        [HttpPost]
         public async Task<IActionResult> ToggleRoomStatus(int roomId, int propertyId)
         {
             var room = await _context.PGRooms.FindAsync(roomId);
