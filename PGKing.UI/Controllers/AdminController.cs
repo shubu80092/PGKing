@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using PGKing.Application.Entities;
 using PGKing.Infrastructure.Data;
 using System.IO;
+using PGKing.UI.Services;
 
 namespace PGKing.UI.Controllers
 {
@@ -12,12 +13,12 @@ namespace PGKing.UI.Controllers
     public class AdminController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly IWebHostEnvironment _environment;
+        private readonly IStorageService _storageService;
 
-        public AdminController(ApplicationDbContext context, IWebHostEnvironment environment)
+        public AdminController(ApplicationDbContext context, IStorageService storageService)
         {
             _context = context;
-            _environment = environment;
+            _storageService = storageService;
         }
 
         #region Dashboard
@@ -103,7 +104,7 @@ namespace PGKing.UI.Controllers
                 {
                     if (imageFile != null)
                     {
-                        property.ImageUrl = await SaveFile(imageFile, "properties");
+                        property.ImageUrl = await _storageService.SaveFileAsync(imageFile, "properties");
                     }
 
                     _context.Properties.Add(property);
@@ -143,9 +144,9 @@ namespace PGKing.UI.Controllers
                     {
                         if (!string.IsNullOrEmpty(property.ImageUrl))
                         {
-                            DeleteFile(property.ImageUrl);
+                            await _storageService.DeleteFileAsync(property.ImageUrl);
                         }
-                        property.ImageUrl = await SaveFile(imageFile, "properties");
+                        property.ImageUrl = await _storageService.SaveFileAsync(imageFile, "properties");
                     }
 
                     _context.Properties.Update(property);
@@ -199,7 +200,7 @@ namespace PGKing.UI.Controllers
             {
                 foreach (var file in galleryFiles)
                 {
-                    var filePath = await SaveFile(file, "properties/gallery");
+                    var filePath = await _storageService.SaveFileAsync(file, "properties/gallery");
                     _context.PropertyMedias.Add(new PropertyMedia
                     {
                         PropertyId = propertyId,
@@ -217,7 +218,7 @@ namespace PGKing.UI.Controllers
             var media = await _context.PropertyMedias.FindAsync(id);
             if (media != null)
             {
-                DeleteFile(media.FilePath);
+                await _storageService.DeleteFileAsync(media.FilePath);
                 _context.PropertyMedias.Remove(media);
                 await _context.SaveChangesAsync();
             }
@@ -241,7 +242,7 @@ namespace PGKing.UI.Controllers
             {
                 foreach (var file in mediaFiles)
                 {
-                    var filePath = await SaveFile(file, "flats");
+                    var filePath = await _storageService.SaveFileAsync(file, "flats");
                     var mediaType = file.ContentType.StartsWith("video/") ? "Video" : "Image";
 
                     _context.FlatMedias.Add(new FlatMedia
@@ -292,7 +293,7 @@ namespace PGKing.UI.Controllers
             {
                 foreach (var m in flat.Media)
                 {
-                    DeleteFile(m.FilePath);
+                    await _storageService.DeleteFileAsync(m.FilePath);
                 }
                 _context.Flats.Remove(flat);
                 await _context.SaveChangesAsync();
@@ -308,7 +309,7 @@ namespace PGKing.UI.Controllers
             {
                 foreach (var m in room.Media)
                 {
-                    DeleteFile(m.FilePath);
+                    await _storageService.DeleteFileAsync(m.FilePath);
                 }
                 _context.PGRooms.Remove(room);
                 await _context.SaveChangesAsync();
@@ -350,7 +351,7 @@ namespace PGKing.UI.Controllers
             {
                 if (imageFile != null)
                 {
-                    banner.ImageUrl = await SaveFile(imageFile, "banners");
+                    banner.ImageUrl = await _storageService.SaveFileAsync(imageFile, "banners");
                 }
                 _context.Banners.Add(banner);
                 await _context.SaveChangesAsync();
@@ -377,9 +378,9 @@ namespace PGKing.UI.Controllers
                 {
                     if (!string.IsNullOrEmpty(banner.ImageUrl))
                     {
-                        DeleteFile(banner.ImageUrl);
+                        await _storageService.DeleteFileAsync(banner.ImageUrl);
                     }
-                    banner.ImageUrl = await SaveFile(imageFile, "banners");
+                    banner.ImageUrl = await _storageService.SaveFileAsync(imageFile, "banners");
                 }
                 _context.Banners.Update(banner);
                 await _context.SaveChangesAsync();
@@ -394,7 +395,7 @@ namespace PGKing.UI.Controllers
             var banner = await _context.Banners.FindAsync(id);
             if (banner != null)
             {
-                DeleteFile(banner.ImageUrl);
+                await _storageService.DeleteFileAsync(banner.ImageUrl);
                 _context.Banners.Remove(banner);
                 await _context.SaveChangesAsync();
             }
@@ -437,35 +438,7 @@ namespace PGKing.UI.Controllers
             return Json(cities);
         }
 
-        private async Task<string> SaveFile(IFormFile file, string subFolder)
-        {
-            string uploadFolder = Path.Combine(_environment.WebRootPath, "uploads", subFolder);
-            if (!Directory.Exists(uploadFolder))
-            {
-                Directory.CreateDirectory(uploadFolder);
-            }
-
-            string fileName = Guid.NewGuid().ToString() + "_" + file.FileName;
-            string filePath = Path.Combine(uploadFolder, fileName);
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(fileStream);
-            }
-
-            return "/uploads/" + subFolder + "/" + fileName;
-        }
-
-        private void DeleteFile(string filePath)
-        {
-            if (string.IsNullOrEmpty(filePath) || filePath.StartsWith("http")) return;
-            
-            string fullPath = Path.Combine(_environment.WebRootPath, filePath.TrimStart('/'));
-            if (System.IO.File.Exists(fullPath))
-            {
-                System.IO.File.Delete(fullPath);
-            }
-        }
+        // File helper methods have been moved to StorageService
         #endregion
     }
 }

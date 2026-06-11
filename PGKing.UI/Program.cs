@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.HttpOverrides;
 using PGKing.Infrastructure.Data;
+using PGKing.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddTransient<IStorageService, StorageService>();
 
 // Configure Forwarded Headers for Render/Reverse Proxy
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
