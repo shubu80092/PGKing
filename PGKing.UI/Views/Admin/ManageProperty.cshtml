@@ -120,8 +120,13 @@
                             <div class="row g-2 mb-3">
                                 @foreach (var m in flat.Media)
                                 {
-                                    <div class="col-2">
+                                    <div class="col-2 position-relative">
                                         <img src="@m.FilePath" class="rounded w-100" style="height: 50px; object-fit: cover;" />
+                                        <form asp-action="DeleteFlatMedia" method="post" class="position-absolute top-0 end-0">
+                                            <input type="hidden" name="id" value="@m.Id" />
+                                            <input type="hidden" name="propertyId" value="@Model.Id" />
+                                            <button type="submit" class="btn btn-danger btn-xs p-0 px-1 rounded-circle border-0" style="font-size: 10px; transform: translate(5px, -5px);">&times;</button>
+                                        </form>
                                     </div>
                                 }
                             </div>

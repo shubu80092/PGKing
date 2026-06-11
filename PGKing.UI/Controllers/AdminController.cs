@@ -286,15 +286,38 @@ namespace PGKing.UI.Controllers
         {
             var flat = await _context.Flats
                 .Include(f => f.Rooms)
+                    .ThenInclude(r => r.Media)
                 .Include(f => f.Media)
                 .FirstOrDefaultAsync(f => f.Id == id);
 
             if (flat != null)
             {
+                // Cascade delete Bookings for all rooms in this flat
+                var roomIds = flat.Rooms.Select(r => r.Id).ToList();
+                if (roomIds.Any())
+                {
+                    var bookings = await _context.Bookings.Where(b => roomIds.Contains(b.PGRoomId)).ToListAsync();
+                    if (bookings.Any())
+                    {
+                        _context.Bookings.RemoveRange(bookings);
+                    }
+                }
+
+                // Delete S3/local files for room media
+                foreach (var room in flat.Rooms)
+                {
+                    foreach (var m in room.Media)
+                    {
+                        await _storageService.DeleteFileAsync(m.FilePath);
+                    }
+                }
+
+                // Delete S3/local files for flat media
                 foreach (var m in flat.Media)
                 {
                     await _storageService.DeleteFileAsync(m.FilePath);
                 }
+
                 _context.Flats.Remove(flat);
                 await _context.SaveChangesAsync();
             }
@@ -304,14 +327,39 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteRoom(int id, int propertyId)
         {
-            var room = await _context.PGRooms.Include(r => r.Media).FirstOrDefaultAsync(r => r.Id == id);
+            var room = await _context.PGRooms
+                .Include(r => r.Media)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
             if (room != null)
             {
+                // Cascade delete Bookings for this room
+                var bookings = await _context.Bookings.Where(b => b.PGRoomId == id).ToListAsync();
+                if (bookings.Any())
+                {
+                    _context.Bookings.RemoveRange(bookings);
+                }
+
+                // Delete associated media files
                 foreach (var m in room.Media)
                 {
                     await _storageService.DeleteFileAsync(m.FilePath);
                 }
+
                 _context.PGRooms.Remove(room);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(ManageProperty), new { id = propertyId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteFlatMedia(int id, int propertyId)
+        {
+            var media = await _context.FlatMedias.FindAsync(id);
+            if (media != null)
+            {
+                await _storageService.DeleteFileAsync(media.FilePath);
+                _context.FlatMedias.Remove(media);
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(ManageProperty), new { id = propertyId });
