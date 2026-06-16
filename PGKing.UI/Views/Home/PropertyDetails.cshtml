@@ -66,8 +66,12 @@
                 <p class="text-muted fs-5 mb-0"><i class="fas fa-map-marker-alt text-primary me-2"></i> @Model.Address, @Model.City?.Name</p>
             </div>
             <div class="d-none d-md-flex gap-2">
-                <button class="btn btn-light rounded-pill border px-4 fw-bold"><i class="far fa-heart me-2"></i> Save</button>
-                <button class="btn btn-light rounded-pill border px-4 fw-bold"><i class="fas fa-share-alt me-2"></i> Share</button>
+                <button id="btnSave" class="btn btn-light rounded-pill border px-4 fw-bold" onclick="toggleSaveProperty(@Model.Id)">
+                    <i class="far fa-heart me-2" id="saveIcon"></i> <span id="saveText">Save</span>
+                </button>
+                <button id="btnShare" class="btn btn-light rounded-pill border px-4 fw-bold" onclick="shareProperty()">
+                    <i class="fas fa-share-alt me-2"></i> Share
+                </button>
             </div>
         </div>
     </div>
@@ -388,5 +392,54 @@
             document.getElementById('lightbox-img').src = lightboxImages[currentIndex];
         }
         function handleLightboxClick(e) { if(e.target.id === 'lightbox') closeLightbox(); }
+
+        // Save Property Functionality
+        const propertyId = @Model.Id;
+
+        function toggleSaveProperty(id) {
+            let saved = JSON.parse(localStorage.getItem('savedProperties') || '[]');
+            const saveIcon = document.getElementById('saveIcon');
+            const saveText = document.getElementById('saveText');
+
+            if (saved.includes(id)) {
+                saved = saved.filter(x => x !== id);
+                saveIcon.className = 'far fa-heart me-2';
+                saveText.innerText = 'Save';
+            } else {
+                saved.push(id);
+                saveIcon.className = 'fas fa-heart me-2 text-danger';
+                saveText.innerText = 'Saved';
+            }
+            localStorage.setItem('savedProperties', JSON.stringify(saved));
+        }
+
+        // Initialize Save state
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = JSON.parse(localStorage.getItem('savedProperties') || '[]');
+            if (saved.includes(propertyId)) {
+                document.getElementById('saveIcon').className = 'fas fa-heart me-2 text-danger';
+                document.getElementById('saveText').innerText = 'Saved';
+            }
+        });
+
+        // Share Functionality
+        async function shareProperty() {
+            const shareData = {
+                title: '@Html.Raw(Model.Title.Replace("'", "\\'"))',
+                text: 'Check out this awesome stay at PGKing!',
+                url: window.location.href
+            };
+            
+            try {
+                if (navigator.share) {
+                    await navigator.share(shareData);
+                } else {
+                    await navigator.clipboard.writeText(window.location.href);
+                    alert('Property link copied to clipboard!');
+                }
+            } catch (err) {
+                console.error('Error sharing:', err);
+            }
+        }
     </script>
 }
