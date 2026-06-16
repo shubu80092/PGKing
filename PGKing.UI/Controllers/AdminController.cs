@@ -59,6 +59,20 @@ namespace PGKing.UI.Controllers
             ViewBag.PendingBookingsCount = pendingBookings;
             ViewBag.MonthlyRevenue = monthlyRevenue;
             
+            // Per-property bed availability breakdown
+            var propertyBedStats = await _context.Properties
+                .Include(p => p.Flats)
+                    .ThenInclude(f => f.Rooms)
+                .Select(p => new 
+                {
+                    PropertyId = p.Id,
+                    PropertyName = p.Title,
+                    TotalBeds = p.Flats.SelectMany(f => f.Rooms).Count(),
+                    OccupiedBeds = p.Flats.SelectMany(f => f.Rooms).Count(r => r.IsOccupied)
+                })
+                .ToListAsync();
+            ViewBag.PropertyBedStats = propertyBedStats;
+            
             // Recent bookings
             var recentBookings = await _context.Bookings
                 .Include(b => b.Property)
@@ -77,6 +91,7 @@ namespace PGKing.UI.Controllers
             {
                 var properties = await _context.Properties
                     .Include(p => p.Flats)
+                        .ThenInclude(f => f.Rooms)
                     .Include(p => p.City)
                     .Include(p => p.State)
                     .ToListAsync();
@@ -318,6 +333,31 @@ namespace PGKing.UI.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> EditFlat(Flat flat)
+        {
+            ModelState.Remove("Property");
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var existingFlat = await _context.Flats.FindAsync(flat.Id);
+                    if (existingFlat == null) return NotFound();
+
+                    existingFlat.Name = flat.Name;
+                    existingFlat.BhkType = flat.BhkType;
+
+                    _context.Flats.Update(existingFlat);
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    return RedirectToAction(nameof(ManageProperty), new { id = flat.PropertyId, error = "Database Error: " + ex.Message });
+                }
+            }
+            return RedirectToAction(nameof(ManageProperty), new { id = flat.PropertyId });
+        }
+
+        [HttpPost]
         public async Task<IActionResult> DeleteFlat(int id, int propertyId)
         {
             var flat = await _context.Flats
@@ -346,6 +386,12 @@ namespace PGKing.UI.Controllers
                     {
                         await _storageService.DeleteFileAsync(m.FilePath);
                     }
+                }
+
+                // Explicitly remove all PGRooms in this flat from the database
+                if (flat.Rooms.Any())
+                {
+                    _context.PGRooms.RemoveRange(flat.Rooms);
                 }
 
                 // Delete S3/local files for flat media
@@ -523,13 +569,87 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> UpdateBookingStatus(int id, string status)
         {
-            var booking = await _context.Bookings.FindAsync(id);
+            var booking = await _context.Bookings
+                .Include(b => b.Room)
+                .FirstOrDefaultAsync(b => b.Id == id);
             if (booking != null)
             {
+                var previousStatus = booking.Status;
                 booking.Status = status;
+
+                // Auto-assign bed when booking is Confirmed
+                if (status == "Confirmed" && booking.Room != null)
+                {
+                    booking.Room.IsOccupied = true;
+                    booking.Room.OccupiedByName = booking.FullName;
+                    booking.Room.OccupiedByMobile = booking.MobileNumber;
+                    booking.Room.OccupiedSince = booking.Room.OccupiedSince ?? DateTime.Now;
+                }
+                // Auto-release bed when booking is Cancelled and it was previously Confirmed
+                else if (status == "Cancelled" && previousStatus == "Confirmed" && booking.Room != null)
+                {
+                    booking.Room.IsOccupied = false;
+                    booking.Room.OccupiedByName = null;
+                    booking.Room.OccupiedByMobile = null;
+                    booking.Room.OccupiedByEmail = null;
+                    booking.Room.OccupiedByAadhar = null;
+                    booking.Room.OccupiedByEmergencyContact = null;
+                    booking.Room.OccupiedByAddress = null;
+                    booking.Room.OccupiedSince = null;
+                }
+
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Bookings));
+        }
+        #endregion
+
+        #region Clients / Tenants
+        public async Task<IActionResult> Clients()
+        {
+            var rooms = await _context.PGRooms
+                .Include(r => r.Flat)
+                    .ThenInclude(f => f.Property)
+                .ToListAsync();
+            return View(rooms);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AssignClientToBed(int roomId, string clientName, string clientMobile, string clientEmail, string clientAadhar, string emergencyContact, string permanentAddress, DateTime? moveInDate)
+        {
+            var room = await _context.PGRooms.FindAsync(roomId);
+            if (room != null)
+            {
+                room.IsOccupied = true;
+                room.OccupiedByName = clientName;
+                room.OccupiedByMobile = clientMobile;
+                room.OccupiedByEmail = clientEmail;
+                room.OccupiedByAadhar = clientAadhar;
+                room.OccupiedByEmergencyContact = emergencyContact;
+                room.OccupiedByAddress = permanentAddress;
+                room.OccupiedSince = moveInDate ?? DateTime.Now;
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Clients));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ReleaseClientFromBed(int roomId)
+        {
+            var room = await _context.PGRooms.FindAsync(roomId);
+            if (room != null)
+            {
+                room.IsOccupied = false;
+                room.OccupiedByName = null;
+                room.OccupiedByMobile = null;
+                room.OccupiedByEmail = null;
+                room.OccupiedByAadhar = null;
+                room.OccupiedByEmergencyContact = null;
+                room.OccupiedByAddress = null;
+                room.OccupiedSince = null;
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Clients));
         }
         #endregion
 

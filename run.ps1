@@ -14,23 +14,32 @@ Write-Host "Target Image: $TargetImage" -ForegroundColor Cyan
 Write-Host "--------------------------------------------------`n" -ForegroundColor Cyan
 
 # Optional login step
-$LoginChoice = Read-Host -Prompt "Do you need to log in to ghcr.io? (y/n)"
-if ($LoginChoice -eq "y" -or $LoginChoice -eq "yes") {
-    $LoginUsername = Read-Host -Prompt "Enter your GitHub Login Username (default: $LoginUsername)"
-    if ([string]::IsNullOrWhiteSpace($LoginUsername)) {
-        $LoginUsername = "rginbox"
-    }
-
-    Write-Host "`nEnsure your GitHub PAT has the 'write:packages' permission." -ForegroundColor Yellow
-    $Token = Read-Host -Prompt "Enter your GitHub Personal Access Token (PAT)" -AsSecureString
-    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Token)
-    $PlainToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
-    
-    Write-Host "Logging into ghcr.io..." -ForegroundColor Gray
-    $PlainToken | docker login ghcr.io -u $LoginUsername --password-stdin
+if ($env:GH_TOKEN) {
+    Write-Host "Logging into ghcr.io using environment variable token..." -ForegroundColor Gray
+    $env:GH_TOKEN | docker login ghcr.io -u $LoginUsername --password-stdin
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to authenticate with ghcr.io."
         exit
+    }
+} else {
+    $LoginChoice = Read-Host -Prompt "Do you need to log in to ghcr.io? (y/n)"
+    if ($LoginChoice -eq "y" -or $LoginChoice -eq "yes") {
+        $LoginUsername = Read-Host -Prompt "Enter your GitHub Login Username (default: $LoginUsername)"
+        if ([string]::IsNullOrWhiteSpace($LoginUsername)) {
+            $LoginUsername = "rginbox"
+        }
+
+        Write-Host "`nEnsure your GitHub PAT has the 'write:packages' permission." -ForegroundColor Yellow
+        $Token = Read-Host -Prompt "Enter your GitHub Personal Access Token (PAT)" -AsSecureString
+        $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Token)
+        $PlainToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+        
+        Write-Host "Logging into ghcr.io..." -ForegroundColor Gray
+        $PlainToken | docker login ghcr.io -u $LoginUsername --password-stdin
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to authenticate with ghcr.io."
+            exit
+        }
     }
 }
 

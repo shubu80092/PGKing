@@ -26,6 +26,15 @@ namespace PGKing.Application.Entities
         public string Amenities { get; set; } = string.Empty; // Comma separated list like "AC,Attached Washroom,Bed"
 
         public bool IsOccupied { get; set; } = false;
+
+        // Client assignment fields
+        public string? OccupiedByName { get; set; }
+        public string? OccupiedByMobile { get; set; }
+        public string? OccupiedByEmail { get; set; }
+        public string? OccupiedByAadhar { get; set; }
+        public string? OccupiedByEmergencyContact { get; set; }
+        public string? OccupiedByAddress { get; set; }
+        public DateTime? OccupiedSince { get; set; }
         
         public ICollection<RoomMedia> Media { get; set; } = new List<RoomMedia>();
     }

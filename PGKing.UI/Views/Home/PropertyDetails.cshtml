@@ -122,12 +122,20 @@
                                             <h5 class="fw-bold mb-1">@room.SharingType</h5>
                                             <div class="d-flex gap-2">
                                                 <span class="badge bg-light text-muted fw-bold px-2 py-1 rounded small">Deposit: ₹@room.Deposit.ToString("N0")</span>
-                                                <span class="badge bg-light text-muted fw-bold px-2 py-1 rounded small">Verified</span>
+                                                @if (room.IsOccupied) {
+                                                    <span class="badge bg-danger bg-opacity-10 text-danger fw-bold px-2 py-1 rounded small">Occupied</span>
+                                                } else {
+                                                    <span class="badge bg-success bg-opacity-10 text-success fw-bold px-2 py-1 rounded small">Available</span>
+                                                }
                                             </div>
                                         </div>
                                         <div class="text-end">
                                             <div class="fs-3 fw-bold text-primary mb-2">₹@room.Rent.ToString("N0")<small class="text-muted fw-normal" style="font-size: 0.8rem">/mo</small></div>
-                                            <button class="btn btn-primary rounded-pill px-4 fw-bold" onclick="openBookingModal(@room.Id, '@room.SharingType', @room.Rent)">Reserve</button>
+                                            @if (room.IsOccupied) {
+                                                <button class="btn btn-secondary rounded-pill px-4 fw-bold" disabled>Occupied</button>
+                                            } else {
+                                                <button class="btn btn-primary rounded-pill px-4 fw-bold" onclick="openBookingModal(@room.Id, '@room.SharingType', @room.Rent)">Reserve</button>
+                                            }
                                         </div>
                                     </div>
                                 }
@@ -141,39 +149,87 @@
             <div class="ox-card p-4 p-lg-5 mb-4 border-0 shadow-sm animate-ox">
                 <h4 class="ox-section-title">Stay Amenities</h4>
                 <div class="ox-tabs">
-                    <button class="ox-tab-btn active" onclick="switchAmenities('common', event)">Property</button>
+                    <button class="ox-tab-btn active" onclick="switchAmenities('property', event)">Property</button>
                     <button class="ox-tab-btn" onclick="switchAmenities('room', event)">Room</button>
-                    <button class="ox-tab-btn" onclick="switchAmenities('food', event)">Services</button>
                 </div>
                 
-                <div id="common-amenities" class="row g-4">
-                    @{
-                        var propAmenities = Model.Amenities?.Split(',') ?? new string[0];
-                        var commonIcons = new Dictionary<string, string> {
-                            { "Washing Machine", "fas fa-tshirt" },
-                            { "Refrigerator", "fas fa-snowflake" },
-                            { "Aqua Guard", "fas fa-tint" },
-                            { "Geyser", "fas fa-hot-tub" },
-                            { "Wi-Fi", "fas fa-wifi" },
-                            { "Cooking and Gas Connections", "fas fa-fire" },
-                            { "Separate Almira", "fas fa-door-closed" },
-                            { "Beds Matters", "fas fa-bed" },
-                            { "Pest control", "fas fa-bug" },
-                            { "Housekeeping services", "fas fa-broom" }
-                        };
+                @{
+                    var propAmenities = Model.Amenities?.Split(',') ?? new string[0];
+                    var roomAmenitiesList = new HashSet<string>();
+                    if (Model.Flats != null) {
+                        foreach(var f in Model.Flats) {
+                            if (f.Rooms != null) {
+                                foreach(var r in f.Rooms) {
+                                    if (!string.IsNullOrEmpty(r.Amenities)) {
+                                        foreach(var am in r.Amenities.Split(',')) {
+                                            var t = am.Trim();
+                                            if(!string.IsNullOrEmpty(t)) roomAmenitiesList.Add(t);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                    @foreach (var am in propAmenities)
+                    var roomAmenities = roomAmenitiesList.ToArray();
+
+                    var commonIcons = new Dictionary<string, string> {
+                        { "Washing Machine", "fas fa-tshirt" },
+                        { "Refrigerator", "fas fa-snowflake" },
+                        { "Aqua Guard", "fas fa-tint" },
+                        { "Geyser", "fas fa-hot-tub" },
+                        { "Wi-Fi", "fas fa-wifi" },
+                        { "Cooking and Gas Connections", "fas fa-fire" },
+                        { "Separate Almira", "fas fa-door-closed" },
+                        { "Beds Matters", "fas fa-bed" },
+                        { "Pest control", "fas fa-bug" },
+                        { "Housekeeping services", "fas fa-broom" }
+                    };
+                }
+
+                <div id="property-amenities" class="amenity-container row g-4">
+                    @if (propAmenities.Length == 0 || (propAmenities.Length == 1 && string.IsNullOrWhiteSpace(propAmenities[0])))
                     {
-                        var trimmedAm = am.Trim();
-                        if (!string.IsNullOrEmpty(trimmedAm)) {
-                            <div class="col-md-4 col-6">
-                                <div class="d-flex align-items-center p-3 rounded-4 bg-light border h-100">
-                                    <div class="bg-white rounded-circle p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
-                                        <i class="@(commonIcons.ContainsKey(trimmedAm) ? commonIcons[trimmedAm] : "fas fa-check-circle") text-primary fs-5"></i>
+                        <div class="col-12"><p class="text-muted">No property amenities listed.</p></div>
+                    }
+                    else
+                    {
+                        @foreach (var am in propAmenities)
+                        {
+                            var trimmedAm = am.Trim();
+                            if (!string.IsNullOrEmpty(trimmedAm)) {
+                                <div class="col-md-4 col-6">
+                                    <div class="d-flex align-items-center p-3 rounded-4 bg-light border h-100">
+                                        <div class="bg-white rounded-circle p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                            <i class="@(commonIcons.ContainsKey(trimmedAm) ? commonIcons[trimmedAm] : "fas fa-check-circle") text-primary fs-5"></i>
+                                        </div>
+                                        <span class="fw-bold small text-dark">@trimmedAm</span>
                                     </div>
-                                    <span class="fw-bold small text-dark">@trimmedAm</span>
                                 </div>
-                            </div>
+                            }
+                        }
+                    }
+                </div>
+
+                <div id="room-amenities" class="amenity-container row g-4" style="display: none;">
+                    @if (roomAmenities.Length == 0)
+                    {
+                        <div class="col-12"><p class="text-muted">No room amenities listed.</p></div>
+                    }
+                    else
+                    {
+                        @foreach (var am in roomAmenities)
+                        {
+                            var trimmedAm = am.Trim();
+                            if (!string.IsNullOrEmpty(trimmedAm)) {
+                                <div class="col-md-4 col-6">
+                                    <div class="d-flex align-items-center p-3 rounded-4 bg-light border h-100">
+                                        <div class="bg-white rounded-circle p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                            <i class="@(commonIcons.ContainsKey(trimmedAm) ? commonIcons[trimmedAm] : "fas fa-check-circle") text-primary fs-5"></i>
+                                        </div>
+                                        <span class="fw-bold small text-dark">@trimmedAm</span>
+                                    </div>
+                                </div>
+                            }
                         }
                     }
                 </div>
@@ -215,7 +271,11 @@
                                 @if (flat.Rooms != null) {
                                     foreach (var room in flat.Rooms)
                                     {
-                                        <option value="@room.Id">@flat.Name - @room.SharingType (₹@room.Rent.ToString("N0"))</option>
+                                        if (room.IsOccupied) {
+                                            <option value="@room.Id" disabled>@flat.Name - @room.SharingType (Occupied)</option>
+                                        } else {
+                                            <option value="@room.Id">@flat.Name - @room.SharingType (₹@room.Rent.ToString("N0"))</option>
+                                        }
                                     }
                                 }
                             }
@@ -296,6 +356,9 @@
                 document.querySelectorAll('.ox-tab-btn').forEach(btn => btn.classList.remove('active'));
                 event.target.classList.add('active');
             }
+            
+            document.querySelectorAll('.amenity-container').forEach(c => c.style.display = 'none');
+            document.getElementById(type + '-amenities').style.display = 'flex';
         }
 
         function openBookingModal(roomId, roomType, rent) {

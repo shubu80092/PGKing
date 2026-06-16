@@ -173,6 +173,89 @@
     </div>
 </div>
 
+<!-- Bed Availability by Property -->
+@{
+    var propertyBedStats = ViewBag.PropertyBedStats as IEnumerable<dynamic>;
+}
+@if (propertyBedStats != null && propertyBedStats.Any())
+{
+    <div class="card border-0 shadow-sm rounded-4 mb-4 animate-fade-in" style="animation-delay: 0.3s">
+        <div class="card-header bg-white border-0 p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold mb-1"><i class="fas fa-building-user text-primary me-2"></i>Bed Availability by Property</h5>
+                    <p class="text-muted small mb-0">Real-time occupancy status per property</p>
+                </div>
+                <div class="d-flex gap-3 align-items-center">
+                    <span class="d-flex align-items-center gap-1 small fw-bold text-success"><span style="width:10px;height:10px;border-radius:50%;background:#22C55E;display:inline-block;"></span>Available</span>
+                    <span class="d-flex align-items-center gap-1 small fw-bold text-danger"><span style="width:10px;height:10px;border-radius:50%;background:#EF4444;display:inline-block;"></span>Occupied</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0 pb-3">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="px-4 py-3 border-0">Property</th>
+                            <th class="py-3 border-0 text-center">Total Beds</th>
+                            <th class="py-3 border-0 text-center">Occupied</th>
+                            <th class="py-3 border-0 text-center">Available</th>
+                            <th class="py-3 border-0" style="min-width:180px;">Occupancy Rate</th>
+                            <th class="py-3 border-0 text-end px-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var stat in propertyBedStats)
+                        {
+                            int totalB = (int)stat.TotalBeds;
+                            int occupiedB = (int)stat.OccupiedBeds;
+                            int availableB = totalB - occupiedB;
+                            int rateB = totalB > 0 ? (int)((double)occupiedB / totalB * 100) : 0;
+                            string barColor = rateB >= 80 ? "#EF4444" : rateB >= 50 ? "#F59E0B" : "#22C55E";
+                            <tr>
+                                <td class="px-4">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:36px;height:36px;background:rgba(0,82,255,0.08);">
+                                            <i class="fas fa-building text-primary" style="font-size:14px;"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark small">@stat.PropertyName</div>
+                                            <div class="text-muted" style="font-size:0.7rem;">ID: #@stat.PropertyId</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border fw-bold">@totalB</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge fw-bold px-3 py-2 rounded-pill" style="background:rgba(239,68,68,0.1);color:#EF4444;font-size:0.7rem;">@occupiedB</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge fw-bold px-3 py-2 rounded-pill" style="background:rgba(34,197,94,0.1);color:#22C55E;font-size:0.7rem;">@availableB</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="progress flex-grow-1 rounded-pill" style="height:8px;">
+                                            <div class="progress-bar rounded-pill" style="width:@rateB%;background:@barColor;transition:width 1s ease;"></div>
+                                        </div>
+                                        <span class="small fw-bold" style="min-width:35px;color:@barColor;">@rateB%</span>
+                                    </div>
+                                </td>
+                                <td class="text-end px-4">
+                                    <a asp-action="ManageProperty" asp-route-id="@stat.PropertyId" class="btn btn-sm btn-light border rounded-pill px-3 fw-bold" style="font-size:0.75rem;">
+                                        <i class="fas fa-eye me-1"></i>Manage
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
 <style>
     @@keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }

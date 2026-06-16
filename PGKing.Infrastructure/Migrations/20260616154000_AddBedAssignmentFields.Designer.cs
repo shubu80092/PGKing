@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PGKing.Infrastructure.Data;
 
@@ -11,9 +12,10 @@ using PGKing.Infrastructure.Data;
 namespace PGKing.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260616154000_AddBedAssignmentFields")]
+    partial class AddBedAssignmentFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -232,18 +234,6 @@ namespace PGKing.Infrastructure.Migrations
 
                     b.Property<bool>("IsOccupied")
                         .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("OccupiedByAadhar")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("OccupiedByAddress")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("OccupiedByEmail")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("OccupiedByEmergencyContact")
-                        .HasColumnType("longtext");
 
                     b.Property<string>("OccupiedByMobile")
                         .HasColumnType("longtext");
