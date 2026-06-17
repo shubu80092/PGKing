@@ -1,7 +1,6 @@
 @model PGKing.Application.Entities.Property
 @{
     ViewData["Title"] = Model.Title + " - Property Details";
-    var gridImages = new List<string>();
     var allImages = new List<string>();
     if (!string.IsNullOrEmpty(Model.ImageUrl)) allImages.Add(Model.ImageUrl);
     if (Model.Media != null) allImages.AddRange(Model.Media.Select(m => m.FilePath));
@@ -10,12 +9,14 @@
         foreach (var flat in Model.Flats)
         {
             if (flat.Media != null) allImages.AddRange(flat.Media.Select(m => m.FilePath));
+            if (flat.Rooms != null)
+            {
+                foreach (var room in flat.Rooms)
+                {
+                    if (room.Media != null) allImages.AddRange(room.Media.Select(m => m.FilePath));
+                }
+            }
         }
-    }
-    
-    gridImages = allImages.Take(5).ToList();
-    while (gridImages.Count < 5) {
-        gridImages.Add("https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800");
     }
 }
 
@@ -76,26 +77,12 @@
         </div>
     </div>
 
-    <!-- Gallery Grid -->
-    <div class="ox-gallery animate-ox">
-        <div class="ox-gallery-item main" onclick="openLightbox(0)">
-            <img src="@gridImages[0]">
-        </div>
-        <div class="ox-gallery-item" onclick="openLightbox(1)">
-            <img src="@gridImages[1]">
-        </div>
-        <div class="ox-gallery-item" onclick="openLightbox(2)">
-            <img src="@gridImages[2]">
-        </div>
-        <div class="ox-gallery-item" onclick="openLightbox(3)">
-            <img src="@gridImages[3]">
-        </div>
-        <div class="ox-gallery-item" onclick="openLightbox(4)">
-            <img src="@gridImages[4]">
-            <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center">
-                <span class="text-white fw-bold fs-4">+@(allImages.Count > 5 ? allImages.Count - 5 : 0) Photos</span>
-            </div>
-        </div>
+    <!-- Property Main Image -->
+    <div class="animate-ox mb-4 rounded-4 overflow-hidden shadow-sm" style="height: 400px; position: relative;">
+        @{
+            string mainImg = !string.IsNullOrEmpty(Model.ImageUrl) ? Model.ImageUrl : (Model.Media?.FirstOrDefault()?.FilePath ?? "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800");
+        }
+        <img src="@mainImg" class="w-100 h-100" style="object-fit: cover;" alt="Property Image" />
     </div>
 
     <div class="ox-main-content">
@@ -115,8 +102,78 @@
                 {
                     foreach (var flat in Model.Flats)
                     {
-                        <div class="mb-4">
+                        <div class="mb-4 p-4 rounded-4 bg-white border shadow-sm">
                             <h6 class="fw-bold text-uppercase text-primary small mb-3" style="letter-spacing: 2px;">@flat.Name (@flat.BhkType)</h6>
+
+                            @if (flat.Media != null && flat.Media.Any())
+                            {
+                                var flatImages = flat.Media.Select(m => m.FilePath).ToList();
+                                <div class="mb-4">
+                                    @if (flatImages.Count == 1)
+                                    {
+                                        <div class="rounded-4 overflow-hidden" style="height: 400px; cursor: pointer;" onclick="openLightboxForUrl('@flatImages[0]')">
+                                            <img src="@flatImages[0]" class="w-100 h-100" style="object-fit: cover;">
+                                        </div>
+                                    }
+                                    else if (flatImages.Count == 2)
+                                    {
+                                        <div class="d-flex gap-2 rounded-4 overflow-hidden" style="height: 300px;">
+                                            <div class="w-50" style="cursor: pointer;" onclick="openLightboxForUrl('@flatImages[0]')"><img src="@flatImages[0]" class="w-100 h-100" style="object-fit: cover;"></div>
+                                            <div class="w-50" style="cursor: pointer;" onclick="openLightboxForUrl('@flatImages[1]')"><img src="@flatImages[1]" class="w-100 h-100" style="object-fit: cover;"></div>
+                                        </div>
+                                    }
+                                    else if (flatImages.Count == 3)
+                                    {
+                                        <div class="d-flex gap-2 rounded-4 overflow-hidden" style="height: 400px;">
+                                            <div class="w-50" style="cursor: pointer;" onclick="openLightboxForUrl('@flatImages[0]')"><img src="@flatImages[0]" class="w-100 h-100" style="object-fit: cover;"></div>
+                                            <div class="w-50 d-flex flex-column gap-2">
+                                                <div class="h-50" style="cursor: pointer;" onclick="openLightboxForUrl('@flatImages[1]')"><img src="@flatImages[1]" class="w-100 h-100" style="object-fit: cover;"></div>
+                                                <div class="h-50" style="cursor: pointer;" onclick="openLightboxForUrl('@flatImages[2]')"><img src="@flatImages[2]" class="w-100 h-100" style="object-fit: cover;"></div>
+                                            </div>
+                                        </div>
+                                    }
+                                    else if (flatImages.Count == 4)
+                                    {
+                                        <div class="d-flex gap-2 rounded-4 overflow-hidden" style="height: 400px;">
+                                            <div class="w-50" style="cursor: pointer;" onclick="openLightboxForUrl('@flatImages[0]')"><img src="@flatImages[0]" class="w-100 h-100" style="object-fit: cover;"></div>
+                                            <div class="w-50 d-flex flex-column gap-2">
+                                                <div class="h-50 d-flex gap-2">
+                                                    <div class="w-50" style="cursor: pointer;" onclick="openLightboxForUrl('@flatImages[1]')"><img src="@flatImages[1]" class="w-100 h-100" style="object-fit: cover;"></div>
+                                                    <div class="w-50" style="cursor: pointer;" onclick="openLightboxForUrl('@flatImages[2]')"><img src="@flatImages[2]" class="w-100 h-100" style="object-fit: cover;"></div>
+                                                </div>
+                                                <div class="h-50" style="cursor: pointer;" onclick="openLightboxForUrl('@flatImages[3]')"><img src="@flatImages[3]" class="w-100 h-100" style="object-fit: cover;"></div>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="ox-gallery animate-ox">
+                                            <div class="ox-gallery-item main" onclick="openLightboxForUrl('@flatImages[0]')">
+                                                <img src="@flatImages[0]">
+                                            </div>
+                                            <div class="ox-gallery-item" onclick="openLightboxForUrl('@flatImages[1]')">
+                                                <img src="@flatImages[1]">
+                                            </div>
+                                            <div class="ox-gallery-item" onclick="openLightboxForUrl('@flatImages[2]')">
+                                                <img src="@flatImages[2]">
+                                            </div>
+                                            <div class="ox-gallery-item" onclick="openLightboxForUrl('@flatImages[3]')">
+                                                <img src="@flatImages[3]">
+                                            </div>
+                                            <div class="ox-gallery-item" onclick="openLightboxForUrl('@flatImages[4]')">
+                                                <img src="@flatImages[4]">
+                                                @if (flatImages.Count > 5)
+                                                {
+                                                    <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center">
+                                                        <span class="text-white fw-bold fs-4">+@(flatImages.Count - 5) Photos</span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+
                             @if (flat.Rooms != null)
                             {
                                 foreach (var room in flat.Rooms)
@@ -152,30 +209,9 @@
             <!-- Amenities -->
             <div class="ox-card p-4 p-lg-5 mb-4 border-0 shadow-sm animate-ox">
                 <h4 class="ox-section-title">Stay Amenities</h4>
-                <div class="ox-tabs">
-                    <button class="ox-tab-btn active" onclick="switchAmenities('property', event)">Property</button>
-                    <button class="ox-tab-btn" onclick="switchAmenities('room', event)">Room</button>
-                </div>
                 
                 @{
                     var propAmenities = Model.Amenities?.Split(',') ?? new string[0];
-                    var roomAmenitiesList = new HashSet<string>();
-                    if (Model.Flats != null) {
-                        foreach(var f in Model.Flats) {
-                            if (f.Rooms != null) {
-                                foreach(var r in f.Rooms) {
-                                    if (!string.IsNullOrEmpty(r.Amenities)) {
-                                        foreach(var am in r.Amenities.Split(',')) {
-                                            var t = am.Trim();
-                                            if(!string.IsNullOrEmpty(t)) roomAmenitiesList.Add(t);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    var roomAmenities = roomAmenitiesList.ToArray();
-
                     var commonIcons = new Dictionary<string, string> {
                         { "Washing Machine", "fas fa-tshirt" },
                         { "Refrigerator", "fas fa-snowflake" },
@@ -190,7 +226,7 @@
                     };
                 }
 
-                <div id="property-amenities" class="amenity-container row g-4">
+                <div class="row g-4">
                     @if (propAmenities.Length == 0 || (propAmenities.Length == 1 && string.IsNullOrWhiteSpace(propAmenities[0])))
                     {
                         <div class="col-12"><p class="text-muted">No property amenities listed.</p></div>
@@ -198,30 +234,6 @@
                     else
                     {
                         @foreach (var am in propAmenities)
-                        {
-                            var trimmedAm = am.Trim();
-                            if (!string.IsNullOrEmpty(trimmedAm)) {
-                                <div class="col-md-4 col-6">
-                                    <div class="d-flex align-items-center p-3 rounded-4 bg-light border h-100">
-                                        <div class="bg-white rounded-circle p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
-                                            <i class="@(commonIcons.ContainsKey(trimmedAm) ? commonIcons[trimmedAm] : "fas fa-check-circle") text-primary fs-5"></i>
-                                        </div>
-                                        <span class="fw-bold small text-dark">@trimmedAm</span>
-                                    </div>
-                                </div>
-                            }
-                        }
-                    }
-                </div>
-
-                <div id="room-amenities" class="amenity-container row g-4" style="display: none;">
-                    @if (roomAmenities.Length == 0)
-                    {
-                        <div class="col-12"><p class="text-muted">No room amenities listed.</p></div>
-                    }
-                    else
-                    {
-                        @foreach (var am in roomAmenities)
                         {
                             var trimmedAm = am.Trim();
                             if (!string.IsNullOrEmpty(trimmedAm)) {
@@ -383,6 +395,10 @@
         function closeLightbox() { 
             document.getElementById('lightbox').style.display = "none"; 
             document.body.style.overflow = 'auto';
+        }
+        function openLightboxForUrl(url) {
+            var idx = lightboxImages.indexOf(url);
+            if(idx !== -1) openLightbox(idx);
         }
         function changeImage(n, e) {
             if(e) e.stopPropagation();
