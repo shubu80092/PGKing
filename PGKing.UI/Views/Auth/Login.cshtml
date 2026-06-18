@@ -81,7 +81,7 @@
                 </div>
             }
 
-            <form asp-controller="Auth" asp-action="Login" method="post">
+            <form asp-controller="Auth" asp-action="Login" asp-route-returnurl="@Context.Request.Query["ReturnUrl"]" method="post">
                 <div class="mb-4">
                     <label class="form-label fw-semibold text-dark">Username</label>
                     <div class="input-group">

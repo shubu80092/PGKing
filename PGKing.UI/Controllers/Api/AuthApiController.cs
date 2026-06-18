@@ -2,6 +2,9 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
+using System.IO;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -10,12 +13,12 @@ using PGKing.Application.DTOs;
 namespace PGKing.UI.Controllers.Api
 {
     [ApiController]
-    [Route("api/[controller]")]
-    public class AuthController : ControllerBase
+    [Route("api/Auth")]
+    public class AuthApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;
 
-        public AuthController(IConfiguration configuration)
+        public AuthApiController(IConfiguration configuration)
         {
             _configuration = configuration;
         }
@@ -23,7 +26,10 @@ namespace PGKing.UI.Controllers.Api
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest request)
         {
-            if (request.Email == "superadmin" && request.Password == "admin123")
+            if (request == null)
+                return BadRequest(ApiResponse<object>.Fail("Invalid request payload"));
+
+            if (request.Username == "superadmin" && request.Password == "admin123")
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var jwtSecret = _configuration["Jwt:Secret"] ?? "YOUR_SUPER_SECRET_KEY_FOR_JWT_THAT_IS_LONG_ENOUGH_123!";
@@ -34,7 +40,7 @@ namespace PGKing.UI.Controllers.Api
                     Subject = new ClaimsIdentity(new[]
                     {
                         new Claim(ClaimTypes.NameIdentifier, "1"),
-                        new Claim(ClaimTypes.Name, request.Email),
+                        new Claim(ClaimTypes.Name, request.Username),
                         new Claim(ClaimTypes.Role, "SuperAdmin")
                     }),
                     Expires = DateTime.UtcNow.AddHours(24),
@@ -47,7 +53,7 @@ namespace PGKing.UI.Controllers.Api
                 var response = new LoginResponse
                 {
                     Token = tokenString,
-                    Email = request.Email,
+                    Username = request.Username,
                     Role = "SuperAdmin"
                 };
 

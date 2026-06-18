@@ -18,7 +18,7 @@ namespace PGKing.UI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(string username, string password)
+        public async Task<IActionResult> Login(string username, string password, string returnUrl = null)
         {
             // Simple SuperAdmin check as requested
             if (username == "superadmin" && password == "admin123")
@@ -35,6 +35,10 @@ namespace PGKing.UI.Controllers
 
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
                 return RedirectToAction("Dashboard", "Admin");
             }
 
