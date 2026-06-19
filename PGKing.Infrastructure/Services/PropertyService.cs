@@ -44,7 +44,7 @@ namespace PGKing.Infrastructure.Services
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public async Task<Property> CreatePropertyAsync(CreatePropertyRequest request)
+        public async Task<Property> CreatePropertyAsync(CreatePropertyRequest request, int? vendorId = null)
         {
             var property = new Property
             {
@@ -54,7 +54,8 @@ namespace PGKing.Infrastructure.Services
                 CityId = request.CityId,
                 Description = request.Description,
                 Amenities = request.Amenities,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.Now,
+                VendorId = vendorId
             };
 
             return await _propertyRepository.AddAsync(property);

@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +12,7 @@ namespace PGKing.UI.Controllers.Api
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(AuthenticationSchemes = "Bearer", Roles = "SuperAdmin")]
+    [Authorize(AuthenticationSchemes = "Bearer", Roles = "SuperAdmin,Vendor")]
     public class PropertiesController : ControllerBase
     {
         private readonly IPropertyService _propertyService;
@@ -20,10 +22,38 @@ namespace PGKing.UI.Controllers.Api
             _propertyService = propertyService;
         }
 
+        private string? GetUserRole()
+        {
+            return User.FindFirst(ClaimTypes.Role)?.Value;
+        }
+
+        private int? GetVendorId()
+        {
+            var vendorIdClaim = User.Claims.FirstOrDefault(c => c.Type == "VendorId")?.Value;
+            if (int.TryParse(vendorIdClaim, out int vendorId))
+            {
+                return vendorId;
+            }
+            return null;
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var properties = await _propertyService.GetAllPropertiesAsync();
+            var role = GetUserRole();
+            if (role == "Vendor")
+            {
+                var vendorId = GetVendorId();
+                if (vendorId.HasValue)
+                {
+                    properties = properties.Where(p => p.VendorId == vendorId.Value);
+                }
+                else
+                {
+                    properties = Enumerable.Empty<Property>();
+                }
+            }
             return Ok(ApiResponse<object>.Ok(properties, "Properties retrieved successfully"));
         }
 
@@ -32,6 +62,16 @@ namespace PGKing.UI.Controllers.Api
         {
             var property = await _propertyService.GetPropertyByIdAsync(id);
             if (property == null) return NotFound(ApiResponse<object>.Fail("Property not found"));
+
+            var role = GetUserRole();
+            if (role == "Vendor")
+            {
+                var vendorId = GetVendorId();
+                if (property.VendorId != vendorId)
+                {
+                    return StatusCode(403, ApiResponse<object>.Fail("Access denied to this property"));
+                }
+            }
             
             return Ok(ApiResponse<Property>.Ok(property, "Property retrieved successfully"));
         }
@@ -41,7 +81,18 @@ namespace PGKing.UI.Controllers.Api
         {
             if (!ModelState.IsValid) return BadRequest(ApiResponse<object>.Fail("Validation failed"));
 
-            var property = await _propertyService.CreatePropertyAsync(request);
+            int? vendorId = null;
+            var role = GetUserRole();
+            if (role == "Vendor")
+            {
+                vendorId = GetVendorId();
+                if (!vendorId.HasValue)
+                {
+                    return BadRequest(ApiResponse<object>.Fail("Vendor ID claim is missing"));
+                }
+            }
+
+            var property = await _propertyService.CreatePropertyAsync(request, vendorId);
             return Ok(ApiResponse<Property>.Ok(property, "Property created successfully"));
         }
 
@@ -52,6 +103,19 @@ namespace PGKing.UI.Controllers.Api
 
             try
             {
+                var property = await _propertyService.GetPropertyByIdAsync(id);
+                if (property == null) return NotFound(ApiResponse<object>.Fail("Property not found"));
+
+                var role = GetUserRole();
+                if (role == "Vendor")
+                {
+                    var vendorId = GetVendorId();
+                    if (property.VendorId != vendorId)
+                    {
+                        return StatusCode(403, ApiResponse<object>.Fail("Access denied to this property"));
+                    }
+                }
+
                 await _propertyService.UpdatePropertyAsync(id, request);
                 return Ok(ApiResponse<object>.Ok(null, "Property updated successfully"));
             }
@@ -66,6 +130,19 @@ namespace PGKing.UI.Controllers.Api
         {
             try
             {
+                var property = await _propertyService.GetPropertyByIdAsync(id);
+                if (property == null) return NotFound(ApiResponse<object>.Fail("Property not found"));
+
+                var role = GetUserRole();
+                if (role == "Vendor")
+                {
+                    var vendorId = GetVendorId();
+                    if (property.VendorId != vendorId)
+                    {
+                        return StatusCode(403, ApiResponse<object>.Fail("Access denied to this property"));
+                    }
+                }
+
                 await _propertyService.DeletePropertyAsync(id);
                 return Ok(ApiResponse<object>.Ok(null, "Property deleted successfully"));
             }
