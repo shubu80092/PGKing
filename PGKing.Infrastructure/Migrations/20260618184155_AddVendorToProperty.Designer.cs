@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PGKing.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using PGKing.Infrastructure.Data;
 namespace PGKing.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260618184155_AddVendorToProperty")]
+    partial class AddVendorToProperty
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -537,6 +540,20 @@ namespace PGKing.Infrastructure.Migrations
                     b.HasIndex("VendorId");
 
                     b.ToTable("Tenants");
+
+                    b.HasData(
+                        new
+                        {
+                            TenantId = 1,
+                            CompanyName = "Test Tenant Company",
+                            ContactPerson = "Alice Tenant",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "tenant@test.com",
+                            IsActive = true,
+                            MobileNumber = "1234567890",
+                            PasswordHash = "tenant123",
+                            VendorId = 1
+                        });
                 });
 
             modelBuilder.Entity("PGKing.Application.Entities.Vendor", b =>
@@ -592,6 +609,19 @@ namespace PGKing.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Vendors");
+
+                    b.HasData(
+                        new
+                        {
+                            VendorId = 1,
+                            CompanyName = "Test Vendor Company",
+                            ContactPerson = "John Vendor",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "vendor@test.com",
+                            IsActive = true,
+                            MobileNumber = "9876543210",
+                            PasswordHash = "vendor123"
+                        });
                 });
 
             modelBuilder.Entity("PGKing.Application.Entities.Booking", b =>

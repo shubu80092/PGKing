@@ -1,14 +1,10 @@
-using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
-using System.IO;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using PGKing.Application.DTOs;
+using PGKing.Application.Interfaces.Services;
+using System.Threading.Tasks;
+using System.Linq;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace PGKing.UI.Controllers.Api
 {
@@ -16,51 +12,48 @@ namespace PGKing.UI.Controllers.Api
     [Route("api/Auth")]
     public class AuthApiController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
+        private readonly IAuthService _authService;
 
-        public AuthApiController(IConfiguration configuration)
+        public AuthApiController(IAuthService authService)
         {
-            _configuration = configuration;
+            _authService = authService;
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            if (request == null)
-                return BadRequest(ApiResponse<object>.Fail("Invalid request payload"));
+            var result = await _authService.LoginAsync(request);
+            if (result.Success)
+                return Ok(ApiResponse<AuthResultDto>.Ok(result, "Login successful"));
 
-            if (request.Username == "superadmin" && request.Password == "admin123")
-            {
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var jwtSecret = _configuration["Jwt:Secret"] ?? "YOUR_SUPER_SECRET_KEY_FOR_JWT_THAT_IS_LONG_ENOUGH_123!";
-                var key = Encoding.ASCII.GetBytes(jwtSecret);
+            return Unauthorized(ApiResponse<object>.Fail(result.Errors.FirstOrDefault() ?? "Invalid credentials"));
+        }
 
-                var tokenDescriptor = new SecurityTokenDescriptor
-                {
-                    Subject = new ClaimsIdentity(new[]
-                    {
-                        new Claim(ClaimTypes.NameIdentifier, "1"),
-                        new Claim(ClaimTypes.Name, request.Username),
-                        new Claim(ClaimTypes.Role, "SuperAdmin")
-                    }),
-                    Expires = DateTime.UtcNow.AddHours(24),
-                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-                };
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
+        {
+            var result = await _authService.RefreshTokenAsync(request);
+            if (result.Success)
+                return Ok(ApiResponse<AuthResultDto>.Ok(result, "Token refreshed successfully"));
 
-                var token = tokenHandler.CreateToken(tokenDescriptor);
-                var tokenString = tokenHandler.WriteToken(token);
+            return Unauthorized(ApiResponse<object>.Fail(result.Errors.FirstOrDefault() ?? "Invalid token"));
+        }
 
-                var response = new LoginResponse
-                {
-                    Token = tokenString,
-                    Username = request.Username,
-                    Role = "SuperAdmin"
-                };
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-                return Ok(ApiResponse<LoginResponse>.Ok(response, "Login successful"));
-            }
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
+                return Unauthorized(ApiResponse<object>.Fail("Invalid token claims"));
 
-            return Unauthorized(ApiResponse<object>.Fail("Invalid Username or Password"));
+            var success = await _authService.ChangePasswordAsync(request, userId, role);
+            if (success)
+                return Ok(ApiResponse<object>.Ok(null, "Password changed successfully"));
+
+            return BadRequest(ApiResponse<object>.Fail("Failed to change password. Please check current password."));
         }
     }
 }

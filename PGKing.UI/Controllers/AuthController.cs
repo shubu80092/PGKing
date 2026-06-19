@@ -7,6 +7,13 @@ namespace PGKing.UI.Controllers
 {
     public class AuthController : Controller
     {
+        private readonly PGKing.Application.Interfaces.Services.IAuthService _authService;
+
+        public AuthController(PGKing.Application.Interfaces.Services.IAuthService authService)
+        {
+            _authService = authService;
+        }
+
         [HttpGet]
         public IActionResult Login()
         {
@@ -20,15 +27,29 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(string username, string password, string returnUrl = null)
         {
-            // Simple SuperAdmin check as requested
-            if (username == "superadmin" && password == "admin123")
+            var request = new PGKing.Application.DTOs.LoginRequest
             {
-                var claims = new List<Claim>
+                Username = username,
+                Password = password
+            };
+
+            var result = await _authService.LoginAsync(request);
+
+            if (result.Success)
+            {
+                var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var jwtToken = tokenHandler.ReadJwtToken(result.Token);
+                var claims = jwtToken.Claims.ToList();
+
+                // Ensure Name and Role claims are explicitly present in standard formats
+                if (!claims.Any(c => c.Type == ClaimTypes.Name))
                 {
-                    new Claim(ClaimTypes.NameIdentifier, "1"),
-                    new Claim(ClaimTypes.Name, username),
-                    new Claim(ClaimTypes.Role, "SuperAdmin")
-                };
+                    claims.Add(new Claim(ClaimTypes.Name, username));
+                }
+                if (!claims.Any(c => c.Type == ClaimTypes.Role))
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, result.Role));
+                }
 
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var principal = new ClaimsPrincipal(identity);
@@ -42,7 +63,7 @@ namespace PGKing.UI.Controllers
                 return RedirectToAction("Dashboard", "Admin");
             }
 
-            ModelState.AddModelError("", "Invalid Username or Password. Try superadmin / admin123");
+            ModelState.AddModelError("", result.Errors.FirstOrDefault() ?? "Invalid Username or Password.");
             return View();
         }
 

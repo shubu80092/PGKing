@@ -9,7 +9,7 @@ using PGKing.UI.Services;
 
 namespace PGKing.UI.Controllers
 {
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = "SuperAdmin,Vendor")]
     public class AdminController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -21,6 +21,31 @@ namespace PGKing.UI.Controllers
             _storageService = storageService;
         }
 
+        private int? GetVendorId()
+        {
+            if (User.IsInRole("Vendor"))
+            {
+                var vendorIdClaim = User.Claims.FirstOrDefault(c => c.Type == "VendorId")?.Value;
+                if (int.TryParse(vendorIdClaim, out int id))
+                {
+                    return id;
+                }
+            }
+            return null;
+        }
+
+        private async Task<bool> CheckPropertyOwnershipAsync(int propertyId)
+        {
+            var property = await _context.Properties.AsNoTracking().FirstOrDefaultAsync(p => p.Id == propertyId);
+            if (property == null) return false;
+            
+            int? vendorId = GetVendorId();
+            if (vendorId.HasValue && property.VendorId != vendorId.Value)
+            {
+                return false;
+            }
+            return true;
+        }
 
         #region Dashboard
         public async Task<IActionResult> Dashboard()
@@ -32,16 +57,39 @@ namespace PGKing.UI.Controllers
             int pendingBookings = 0;
             decimal monthlyRevenue = 0;
 
+            int? vendorId = GetVendorId();
+
             try
             {
-                propertiesCount = await _context.Properties.CountAsync();
-                flatsCount = await _context.Flats.CountAsync();
+                var propertiesQuery = _context.Properties.AsQueryable();
+                if (vendorId.HasValue)
+                {
+                    propertiesQuery = propertiesQuery.Where(p => p.VendorId == vendorId.Value);
+                }
+                propertiesCount = await propertiesQuery.CountAsync();
+
+                var flatsQuery = _context.Flats.AsQueryable();
+                if (vendorId.HasValue)
+                {
+                    flatsQuery = flatsQuery.Where(f => f.Property.VendorId == vendorId.Value);
+                }
+                flatsCount = await flatsQuery.CountAsync();
                 
-                var rooms = await _context.PGRooms.ToListAsync();
+                var roomsQuery = _context.PGRooms.AsQueryable();
+                if (vendorId.HasValue)
+                {
+                    roomsQuery = roomsQuery.Where(r => r.Flat.Property.VendorId == vendorId.Value);
+                }
+                var rooms = await roomsQuery.ToListAsync();
                 totalBeds = rooms.Count;
                 occupiedBeds = rooms.Count(r => r.IsOccupied);
                 
-                pendingBookings = await _context.Bookings.CountAsync(b => b.Status == "Pending");
+                var bookingsQuery = _context.Bookings.AsQueryable();
+                if (vendorId.HasValue)
+                {
+                    bookingsQuery = bookingsQuery.Where(b => b.Property.VendorId == vendorId.Value);
+                }
+                pendingBookings = await bookingsQuery.CountAsync(b => b.Status == "Pending");
                 
                 // Real monthly revenue from occupied beds
                 monthlyRevenue = rooms.Where(r => r.IsOccupied).Sum(r => r.Rent);
@@ -60,7 +108,12 @@ namespace PGKing.UI.Controllers
             ViewBag.MonthlyRevenue = monthlyRevenue;
             
             // Per-property bed availability breakdown
-            var propertyBedStats = await _context.Properties
+            var statsQuery = _context.Properties.AsQueryable();
+            if (vendorId.HasValue)
+            {
+                statsQuery = statsQuery.Where(p => p.VendorId == vendorId.Value);
+            }
+            var propertyBedStats = await statsQuery
                 .Include(p => p.Flats)
                     .ThenInclude(f => f.Rooms)
                 .Select(p => new 
@@ -74,7 +127,12 @@ namespace PGKing.UI.Controllers
             ViewBag.PropertyBedStats = propertyBedStats;
             
             // Recent bookings
-            var recentBookings = await _context.Bookings
+            var rBookingsQuery = _context.Bookings.AsQueryable();
+            if (vendorId.HasValue)
+            {
+                rBookingsQuery = rBookingsQuery.Where(b => b.Property.VendorId == vendorId.Value);
+            }
+            var recentBookings = await rBookingsQuery
                 .Include(b => b.Property)
                 .OrderByDescending(b => b.CreatedAt)
                 .Take(5)
@@ -89,7 +147,13 @@ namespace PGKing.UI.Controllers
         {
             try
             {
-                var properties = await _context.Properties
+                int? vendorId = GetVendorId();
+                var query = _context.Properties.AsQueryable();
+                if (vendorId.HasValue)
+                {
+                    query = query.Where(p => p.VendorId == vendorId.Value);
+                }
+                var properties = await query
                     .Include(p => p.Flats)
                         .ThenInclude(f => f.Rooms)
                     .Include(p => p.City)
@@ -123,6 +187,9 @@ namespace PGKing.UI.Controllers
                         property.ImageUrl = await _storageService.SaveFileAsync(imageFile, "properties");
                     }
 
+                    // Assign property to the logged-in Vendor
+                    property.VendorId = GetVendorId();
+
                     _context.Properties.Add(property);
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(ManageProperty), new { id = property.Id });
@@ -142,6 +209,13 @@ namespace PGKing.UI.Controllers
             var property = await _context.Properties.FindAsync(id);
             if (property == null) return NotFound();
 
+            // Prevent Vendors from accessing other users' properties
+            int? vendorId = GetVendorId();
+            if (vendorId.HasValue && property.VendorId != vendorId.Value)
+            {
+                return Forbid();
+            }
+
             ViewBag.States = new SelectList(await _context.States.ToListAsync(), "Id", "Name", property.StateId);
             ViewBag.Cities = new SelectList(await _context.Cities.Where(c => c.StateId == property.StateId).ToListAsync(), "Id", "Name", property.CityId);
             
@@ -151,6 +225,16 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> EditProperty(Property property, IFormFile? imageFile)
         {
+            // Verify ownership
+            var existingProperty = await _context.Properties.AsNoTracking().FirstOrDefaultAsync(p => p.Id == property.Id);
+            if (existingProperty == null) return NotFound();
+
+            int? vendorId = GetVendorId();
+            if (vendorId.HasValue && existingProperty.VendorId != vendorId.Value)
+            {
+                return Forbid();
+            }
+
             ModelState.Remove("ImageUrl");
             if (ModelState.IsValid)
             {
@@ -164,6 +248,8 @@ namespace PGKing.UI.Controllers
                         }
                         property.ImageUrl = await _storageService.SaveFileAsync(imageFile, "properties");
                     }
+
+                    property.VendorId = existingProperty.VendorId; // Retain ownership
 
                     _context.Properties.Update(property);
                     await _context.SaveChangesAsync();
@@ -194,12 +280,22 @@ namespace PGKing.UI.Controllers
                 .FirstOrDefaultAsync(p => p.Id == id);
             
             if (property == null) return NotFound();
+
+            // Prevent Vendors from managing other users' properties
+            int? vendorId = GetVendorId();
+            if (vendorId.HasValue && property.VendorId != vendorId.Value)
+            {
+                return Forbid();
+            }
+
             return View(property);
         }
 
         [HttpPost]
         public async Task<IActionResult> UpdatePropertyAbout(int propertyId, string description)
         {
+            if (!await CheckPropertyOwnershipAsync(propertyId)) return Forbid();
+
             var property = await _context.Properties.FindAsync(propertyId);
             if (property != null)
             {
@@ -212,6 +308,8 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> AddGalleryImages(int propertyId, List<IFormFile> galleryFiles)
         {
+            if (!await CheckPropertyOwnershipAsync(propertyId)) return Forbid();
+
             if (galleryFiles != null && galleryFiles.Count > 0)
             {
                 foreach (var file in galleryFiles)
@@ -231,6 +329,8 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> DeletePropertyMedia(int id, int propertyId)
         {
+            if (!await CheckPropertyOwnershipAsync(propertyId)) return Forbid();
+
             var media = await _context.PropertyMedias.FindAsync(id);
             if (media != null)
             {
@@ -244,6 +344,8 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> AddFlat(int propertyId, string flatName, string bhkType, List<IFormFile> mediaFiles)
         {
+            if (!await CheckPropertyOwnershipAsync(propertyId)) return Forbid();
+
             var flat = new Flat
             {
                 PropertyId = propertyId,
@@ -277,6 +379,8 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> AddRoom(PGRoom room, List<string> selectedAmenities, int propertyId)
         {
+            if (!await CheckPropertyOwnershipAsync(propertyId)) return Forbid();
+
             if (selectedAmenities != null && selectedAmenities.Any())
             {
                 room.Amenities = string.Join(",", selectedAmenities);
@@ -300,6 +404,8 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> EditRoom(PGRoom room, List<string> selectedAmenities, int propertyId)
         {
+            if (!await CheckPropertyOwnershipAsync(propertyId)) return Forbid();
+
             if (selectedAmenities != null && selectedAmenities.Any())
             {
                 room.Amenities = string.Join(",", selectedAmenities);
@@ -335,6 +441,8 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> EditFlat(Flat flat)
         {
+            if (!await CheckPropertyOwnershipAsync(flat.PropertyId)) return Forbid();
+
             ModelState.Remove("Property");
             if (ModelState.IsValid)
             {
@@ -360,6 +468,8 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteFlat(int id, int propertyId)
         {
+            if (!await CheckPropertyOwnershipAsync(propertyId)) return Forbid();
+
             var flat = await _context.Flats
                 .Include(f => f.Rooms)
                     .ThenInclude(r => r.Media)
@@ -409,6 +519,8 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteRoom(int id, int propertyId)
         {
+            if (!await CheckPropertyOwnershipAsync(propertyId)) return Forbid();
+
             var room = await _context.PGRooms
                 .Include(r => r.Media)
                 .FirstOrDefaultAsync(r => r.Id == id);
@@ -437,6 +549,8 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteFlatMedia(int id, int propertyId)
         {
+            if (!await CheckPropertyOwnershipAsync(propertyId)) return Forbid();
+
             var media = await _context.FlatMedias.FindAsync(id);
             if (media != null)
             {
@@ -450,6 +564,8 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> AddFlatImages(int flatId, List<IFormFile> flatFiles, int propertyId)
         {
+            if (!await CheckPropertyOwnershipAsync(propertyId)) return Forbid();
+
             if (flatFiles != null && flatFiles.Count > 0)
             {
                 foreach (var file in flatFiles)
@@ -472,6 +588,8 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> ToggleRoomStatus(int roomId, int propertyId)
         {
+            if (!await CheckPropertyOwnershipAsync(propertyId)) return Forbid();
+
             var room = await _context.PGRooms.FindAsync(roomId);
             if (room != null)
             {
@@ -480,9 +598,72 @@ namespace PGKing.UI.Controllers
             }
             return RedirectToAction(nameof(ManageProperty), new { id = propertyId });
         }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteProperty(int id)
+        {
+            if (!await CheckPropertyOwnershipAsync(id)) return Forbid();
+
+            var property = await _context.Properties
+                .Include(p => p.Flats)
+                    .ThenInclude(f => f.Rooms)
+                        .ThenInclude(r => r.Media)
+                .Include(p => p.Flats)
+                    .ThenInclude(f => f.Media)
+                .Include(p => p.Media)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (property == null) return NotFound();
+
+            var flats = property.Flats.ToList();
+            var rooms = flats.SelectMany(f => f.Rooms).ToList();
+            var roomIds = rooms.Select(r => r.Id).ToList();
+            if (roomIds.Any())
+            {
+                var bookings = await _context.Bookings.Where(b => roomIds.Contains(b.PGRoomId)).ToListAsync();
+                if (bookings.Any())
+                {
+                    _context.Bookings.RemoveRange(bookings);
+                }
+            }
+
+            foreach (var r in rooms)
+            {
+                foreach (var rm in r.Media)
+                {
+                    await _storageService.DeleteFileAsync(rm.FilePath);
+                }
+            }
+
+            foreach (var f in flats)
+            {
+                foreach (var fm in f.Media)
+                {
+                    await _storageService.DeleteFileAsync(fm.FilePath);
+                }
+            }
+
+            foreach (var pm in property.Media)
+            {
+                await _storageService.DeleteFileAsync(pm.FilePath);
+            }
+
+            if (!string.IsNullOrEmpty(property.ImageUrl))
+            {
+                await _storageService.DeleteFileAsync(property.ImageUrl);
+            }
+
+            if (rooms.Any()) _context.PGRooms.RemoveRange(rooms);
+            if (flats.Any()) _context.Flats.RemoveRange(flats);
+            _context.Properties.Remove(property);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Properties));
+        }
         #endregion
 
         #region Banners
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> Banners()
         {
             var banners = await _context.Banners.OrderBy(b => b.DisplayOrder).ToListAsync();
@@ -490,12 +671,14 @@ namespace PGKing.UI.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
         public IActionResult CreateBanner()
         {
             return View();
         }
 
         [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> CreateBanner(Banner banner, IFormFile imageFile)
         {
             ModelState.Remove("ImageUrl");
@@ -513,6 +696,7 @@ namespace PGKing.UI.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> EditBanner(int id)
         {
             var banner = await _context.Banners.FindAsync(id);
@@ -521,6 +705,7 @@ namespace PGKing.UI.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> EditBanner(Banner banner, IFormFile? imageFile)
         {
             ModelState.Remove("ImageUrl");
@@ -542,6 +727,7 @@ namespace PGKing.UI.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> DeleteBanner(int id)
         {
             var banner = await _context.Banners.FindAsync(id);
@@ -558,7 +744,13 @@ namespace PGKing.UI.Controllers
         #region Bookings
         public async Task<IActionResult> Bookings()
         {
-            var bookings = await _context.Bookings
+            int? vendorId = GetVendorId();
+            var query = _context.Bookings.AsQueryable();
+            if (vendorId.HasValue)
+            {
+                query = query.Where(b => b.Property.VendorId == vendorId.Value);
+            }
+            var bookings = await query
                 .Include(b => b.Property)
                 .Include(b => b.Room)
                 .OrderByDescending(b => b.CreatedAt)
@@ -571,9 +763,18 @@ namespace PGKing.UI.Controllers
         {
             var booking = await _context.Bookings
                 .Include(b => b.Room)
+                .Include(b => b.Property)
                 .FirstOrDefaultAsync(b => b.Id == id);
+            
             if (booking != null)
             {
+                // Verify Vendor owns this property
+                int? vendorId = GetVendorId();
+                if (vendorId.HasValue && booking.Property.VendorId != vendorId.Value)
+                {
+                    return Forbid();
+                }
+
                 var previousStatus = booking.Status;
                 booking.Status = status;
 
@@ -607,7 +808,13 @@ namespace PGKing.UI.Controllers
         #region Clients / Tenants
         public async Task<IActionResult> Clients()
         {
-            var rooms = await _context.PGRooms
+            int? vendorId = GetVendorId();
+            var query = _context.PGRooms.AsQueryable();
+            if (vendorId.HasValue)
+            {
+                query = query.Where(r => r.Flat.Property.VendorId == vendorId.Value);
+            }
+            var rooms = await query
                 .Include(r => r.Flat)
                     .ThenInclude(f => f.Property)
                 .ToListAsync();
@@ -617,9 +824,20 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> AssignClientToBed(int roomId, string clientName, string clientMobile, string clientEmail, string clientAadhar, string emergencyContact, string permanentAddress, DateTime? moveInDate)
         {
-            var room = await _context.PGRooms.FindAsync(roomId);
+            var room = await _context.PGRooms
+                .Include(r => r.Flat)
+                    .ThenInclude(f => f.Property)
+                .FirstOrDefaultAsync(r => r.Id == roomId);
+
             if (room != null)
             {
+                // Verify Vendor owns this property
+                int? vendorId = GetVendorId();
+                if (vendorId.HasValue && room.Flat?.Property?.VendorId != vendorId.Value)
+                {
+                    return Forbid();
+                }
+
                 room.IsOccupied = true;
                 room.OccupiedByName = clientName;
                 room.OccupiedByMobile = clientMobile;
@@ -628,6 +846,39 @@ namespace PGKing.UI.Controllers
                 room.OccupiedByEmergencyContact = emergencyContact;
                 room.OccupiedByAddress = permanentAddress;
                 room.OccupiedSince = moveInDate ?? DateTime.Now;
+
+                // Auto-create Tenant Credentials if Email is provided
+                if (!string.IsNullOrEmpty(clientEmail))
+                {
+                    var existingTenant = await _context.Tenants.FirstOrDefaultAsync(t => t.Email == clientEmail);
+                    if (existingTenant == null)
+                    {
+                        int tenantVendorId = vendorId ?? 1;
+                        if (!vendorId.HasValue)
+                        {
+                            var defaultVendor = await _context.Vendors.FirstOrDefaultAsync();
+                            if (defaultVendor != null)
+                            {
+                                tenantVendorId = defaultVendor.VendorId;
+                            }
+                        }
+                        
+                        var newTenant = new Tenant
+                        {
+                            VendorId = tenantVendorId,
+                            CompanyName = clientName + " (Individual)",
+                            ContactPerson = clientName,
+                            Email = clientEmail,
+                            MobileNumber = clientMobile ?? "",
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword("tenant123"), // Default password: tenant123
+                            IsActive = true,
+                            CreatedDate = DateTime.UtcNow,
+                            CreatedBy = User.Identity?.Name ?? "SuperAdmin"
+                        };
+                        _context.Tenants.Add(newTenant);
+                    }
+                }
+
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Clients));
@@ -636,9 +887,20 @@ namespace PGKing.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> ReleaseClientFromBed(int roomId)
         {
-            var room = await _context.PGRooms.FindAsync(roomId);
+            var room = await _context.PGRooms
+                .Include(r => r.Flat)
+                    .ThenInclude(f => f.Property)
+                .FirstOrDefaultAsync(r => r.Id == roomId);
+
             if (room != null)
             {
+                // Verify Vendor owns this property
+                int? vendorId = GetVendorId();
+                if (vendorId.HasValue && room.Flat?.Property?.VendorId != vendorId.Value)
+                {
+                    return Forbid();
+                }
+
                 room.IsOccupied = false;
                 room.OccupiedByName = null;
                 room.OccupiedByMobile = null;
@@ -650,6 +912,116 @@ namespace PGKing.UI.Controllers
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Clients));
+        }
+        #endregion
+
+        #region Vendors
+        [HttpGet]
+        public async Task<IActionResult> Vendors()
+        {
+            if (User.IsInRole("Vendor"))
+            {
+                return Forbid();
+            }
+            var vendors = await _context.Vendors.ToListAsync();
+            return View(vendors);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateVendor(Vendor vendor, string password)
+        {
+            if (User.IsInRole("Vendor"))
+            {
+                return Forbid();
+            }
+
+            ModelState.Remove("PasswordHash");
+            if (ModelState.IsValid)
+            {
+                var existing = await _context.Vendors.AnyAsync(v => v.Email == vendor.Email);
+                if (existing)
+                {
+                    TempData["Error"] = "Email already in use.";
+                    return RedirectToAction(nameof(Vendors));
+                }
+
+                vendor.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+                vendor.CreatedDate = System.DateTime.UtcNow;
+                _context.Vendors.Add(vendor);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Vendor created successfully.";
+            }
+            else
+            {
+                TempData["Error"] = "Invalid vendor data.";
+            }
+            return RedirectToAction(nameof(Vendors));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditVendor(Vendor vendor, string? password)
+        {
+            if (User.IsInRole("Vendor"))
+            {
+                return Forbid();
+            }
+
+            ModelState.Remove("PasswordHash");
+            if (ModelState.IsValid)
+            {
+                var existingVendor = await _context.Vendors.FindAsync(vendor.VendorId);
+                if (existingVendor == null) return NotFound();
+
+                var duplicateEmail = await _context.Vendors.AnyAsync(v => v.Email == vendor.Email && v.VendorId != vendor.VendorId);
+                if (duplicateEmail)
+                {
+                    TempData["Error"] = "Email already in use.";
+                    return RedirectToAction(nameof(Vendors));
+                }
+
+                existingVendor.CompanyName = vendor.CompanyName;
+                existingVendor.ContactPerson = vendor.ContactPerson;
+                existingVendor.Email = vendor.Email;
+                existingVendor.MobileNumber = vendor.MobileNumber;
+                existingVendor.IsActive = vendor.IsActive;
+                existingVendor.ModifiedDate = System.DateTime.UtcNow;
+
+                if (!string.IsNullOrEmpty(password))
+                {
+                    existingVendor.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+                }
+
+                _context.Vendors.Update(existingVendor);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Vendor updated successfully.";
+            }
+            else
+            {
+                TempData["Error"] = "Invalid vendor data.";
+            }
+            return RedirectToAction(nameof(Vendors));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteVendor(int id)
+        {
+            if (User.IsInRole("Vendor"))
+            {
+                return Forbid();
+            }
+
+            var vendor = await _context.Vendors.FindAsync(id);
+            if (vendor != null)
+            {
+                _context.Vendors.Remove(vendor);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Vendor deleted successfully.";
+            }
+            else
+            {
+                TempData["Error"] = "Vendor not found.";
+            }
+            return RedirectToAction(nameof(Vendors));
         }
         #endregion
 

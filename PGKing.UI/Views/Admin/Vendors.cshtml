@@ -1,0 +1,299 @@
+@model IEnumerable<PGKing.Application.Entities.Vendor>
+@{
+    ViewData["Title"] = "Vendors Management";
+    Layout = "_AdminLayout";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+        <i class="fas fa-check-circle me-2"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card border-0 shadow-sm rounded-4 animate-fade-in">
+    <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold mb-1"><i class="fas fa-user-tie text-primary me-2"></i>Vendors Directory</h5>
+            <p class="text-muted small mb-0">Manage registered Vendors, credentials, and account statuses.</p>
+        </div>
+        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addVendorModal">
+            <i class="fas fa-plus-circle me-2"></i> Add Vendor
+        </button>
+    </div>
+    <div class="card-body p-4 pt-0">
+        <div class="table-responsive">
+            <table id="vendorsTable" class="table table-hover align-middle w-100 border-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="border-0 px-4">Company Details</th>
+                        <th class="border-0">Contact Person</th>
+                        <th class="border-0">Email & Mobile</th>
+                        <th class="border-0 text-center">Status</th>
+                        <th class="border-0">Registered Date</th>
+                        <th class="border-0 text-end px-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null)
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="px-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary-soft rounded-3 d-flex align-items-center justify-content-center shadow-sm me-3" style="width: 45px; height: 45px; background: rgba(0, 82, 255, 0.08);">
+                                            <i class="fas fa-briefcase text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">@item.CompanyName</div>
+                                            <div class="text-muted small">ID: #VN-@item.VendorId</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-dark small">@item.ContactPerson</span>
+                                </td>
+                                <td>
+                                    <div class="small text-dark fw-bold">@item.Email</div>
+                                    <div class="text-muted small">@item.MobileNumber</div>
+                                </td>
+                                <td class="text-center">
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold" style="font-size: 0.65rem;">ACTIVE</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill fw-bold" style="font-size: 0.65rem;">INACTIVE</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="text-muted small fw-bold">@item.CreatedDate.ToString("MMM dd, yyyy")</span>
+                                </td>
+                                <td class="text-end px-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button class="btn btn-sm btn-light border rounded-pill px-3 fw-bold shadow-sm" 
+                                                onclick="openEditModal('@item.VendorId', '@item.CompanyName', '@item.ContactPerson', '@item.Email', '@item.MobileNumber', '@item.IsActive.ToString().ToLower()')">
+                                            <i class="fas fa-edit me-1 text-warning"></i> Edit
+                                        </button>
+                                        <form asp-action="DeleteVendor" method="post" onsubmit="return confirmDelete(event, '@item.CompanyName')" style="display:inline;">
+                                            <input type="hidden" name="id" value="@item.VendorId" />
+                                            <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2 fw-bold shadow-sm text-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Vendor Modal -->
+<div class="modal fade" id="addVendorModal" tabindex="-1" aria-labelledby="addVendorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-bottom p-4">
+                <h5 class="modal-title fw-bold" id="addVendorModalLabel"><i class="fas fa-plus-circle me-2 text-primary"></i>Register New Vendor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="CreateVendor" method="post" class="needs-validation" novalidate>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Company Name</label>
+                        <input type="text" name="CompanyName" class="form-control rounded-3" placeholder="e.g. PG Properties Ltd" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Contact Person</label>
+                        <input type="text" name="ContactPerson" class="form-control rounded-3" placeholder="e.g. John Doe" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email Address</label>
+                        <input type="email" name="Email" class="form-control rounded-3" placeholder="e.g. vendor@test.com" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mobile Number</label>
+                        <input type="tel" name="MobileNumber" class="form-control rounded-3" placeholder="e.g. 9876543210" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Access Password</label>
+                        <div class="input-group">
+                            <input type="password" name="password" id="addVendorPassword" class="form-control rounded-start-3" placeholder="••••••••" required />
+                            <button class="btn btn-light border border-start-0" type="button" onclick="togglePasswordVisibility('addVendorPassword', this)" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                                <i class="fas fa-eye text-muted"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted small mt-1 d-block">Will be securely hashed using BCrypt.</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3 bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold border" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Register Vendor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Vendor Modal -->
+<div class="modal fade" id="editVendorModal" tabindex="-1" aria-labelledby="editVendorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-bottom p-4">
+                <h5 class="modal-title fw-bold" id="editVendorModalLabel"><i class="fas fa-edit me-2 text-warning"></i>Modify Vendor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="EditVendor" method="post" class="needs-validation" novalidate>
+                <input type="hidden" name="VendorId" id="edit_vendorId" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Company Name</label>
+                        <input type="text" name="CompanyName" id="edit_companyName" class="form-control rounded-3" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Contact Person</label>
+                        <input type="text" name="ContactPerson" id="edit_contactPerson" class="form-control rounded-3" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email Address</label>
+                        <input type="email" name="Email" id="edit_email" class="form-control rounded-3" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mobile Number</label>
+                        <input type="tel" name="MobileNumber" id="edit_mobileNumber" class="form-control rounded-3" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Access Password <small class="text-muted fw-normal">(Leave blank to keep current)</small></label>
+                        <div class="input-group">
+                            <input type="password" name="password" id="editVendorPassword" class="form-control rounded-start-3" placeholder="••••••••" />
+                            <button class="btn btn-light border border-start-0" type="button" onclick="togglePasswordVisibility('editVendorPassword', this)" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                                <i class="fas fa-eye text-muted"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3 form-check form-switch mt-4">
+                        <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="edit_isActive">
+                        <label class="form-check-label fw-bold text-dark" for="edit_isActive">Account Active & Enabled</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3 bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold border" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold text-dark">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Custom style matches properties list view */
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid #E2E8F0;
+        border-radius: 50px;
+        padding: 6px 15px;
+        font-size: 0.85rem;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #0052FF !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 50px;
+    }
+    .dataTables_wrapper .dataTables_info { font-size: 0.85rem; color: #64748B; font-weight: 600; }
+    table.dataTable thead th { border-bottom: 2px solid #F1F5F9 !important; }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#vendorsTable').DataTable({
+                responsive: true,
+                order: [[0, 'asc']],
+                pageLength: 10,
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search vendors...",
+                    lengthMenu: "Show _MENU_"
+                }
+            });
+        });
+
+        function openEditModal(id, companyName, contactPerson, email, mobile, isActive) {
+            $('#edit_vendorId').val(id);
+            $('#edit_companyName').val(companyName);
+            $('#edit_contactPerson').val(contactPerson);
+            $('#edit_email').val(email);
+            $('#edit_mobileNumber').val(mobile);
+            
+            // Checkbox logic
+            if (isActive === 'true') {
+                $('#edit_isActive').prop('checked', true);
+            } else {
+                $('#edit_isActive').prop('checked', false);
+            }
+            
+            $('#editVendorModal').modal('show');
+        }
+
+        function confirmDelete(e, companyName) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "Do you want to delete vendor '" + companyName + "'? All relations and data will be removed.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#64748B',
+                confirmButtonText: 'Yes, Delete Vendor!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    e.target.submit();
+                }
+            });
+            return false;
+        }
+
+        // Bootstrap form validation
+        (() => {
+            'use strict'
+            const forms = document.querySelectorAll('.needs-validation')
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+        })()
+
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash text-muted';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye text-muted';
+            }
+        }
+    </script>
+}
