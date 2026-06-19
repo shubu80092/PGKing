@@ -32,6 +32,11 @@ namespace PGKing.Application.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
+        // Vendor ownership (nullable for SuperAdmin/system properties)
+        public int? VendorId { get; set; }
+        [ForeignKey("VendorId")]
+        public Vendor? Vendor { get; set; }
+
         public ICollection<Flat> Flats { get; set; } = new List<Flat>();
         
         public ICollection<PropertyMedia> Media { get; set; } = new List<PropertyMedia>();

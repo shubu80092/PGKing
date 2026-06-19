@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PGKing.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using PGKing.Infrastructure.Data;
 namespace PGKing.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260618171738_HashSeedPassword")]
+    partial class HashSeedPassword
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -306,16 +309,11 @@ namespace PGKing.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
-                    b.Property<int?>("VendorId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CityId");
 
                     b.HasIndex("StateId");
-
-                    b.HasIndex("VendorId");
 
                     b.ToTable("Properties");
                 });
@@ -669,15 +667,9 @@ namespace PGKing.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PGKing.Application.Entities.Vendor", "Vendor")
-                        .WithMany()
-                        .HasForeignKey("VendorId");
-
                     b.Navigation("City");
 
                     b.Navigation("State");
-
-                    b.Navigation("Vendor");
                 });
 
             modelBuilder.Entity("PGKing.Application.Entities.PropertyMedia", b =>

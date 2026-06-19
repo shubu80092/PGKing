@@ -20,11 +20,32 @@ namespace PGKing.Infrastructure.Data
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<PropertyMedia> PropertyMedias { get; set; }
 
+        public DbSet<Vendor> Vendors { get; set; }
+        public DbSet<Tenant> Tenants { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<SuperAdmin> SuperAdmins { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
             
+            // Unique Constraints
+            modelBuilder.Entity<Vendor>().HasIndex(v => v.Email).IsUnique();
+            modelBuilder.Entity<Tenant>().HasIndex(t => t.Email).IsUnique();
+            modelBuilder.Entity<SuperAdmin>().HasIndex(s => s.Username).IsUnique();
+            
             // Seed Data
+            modelBuilder.Entity<SuperAdmin>().HasData(
+                new SuperAdmin 
+                { 
+                    Id = 1, 
+                    Username = "superadmin", 
+                    PasswordHash = "$2a$11$e.fW4f.M6.2y0yHnS1R4KOW7Zc/9c5L31fH8y/6sH.Ld8UvG4B9XG", // BCrypt hash of "admin123"
+                    CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                }
+            );
+
+
             modelBuilder.Entity<State>().HasData(
                 new State { Id = 1, Name = "Maharashtra" },
                 new State { Id = 2, Name = "Karnataka" },
