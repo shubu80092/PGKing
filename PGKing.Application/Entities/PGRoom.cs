@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace PGKing.Application.Entities
 {
@@ -36,6 +37,7 @@ namespace PGKing.Application.Entities
         public string? OccupiedByAddress { get; set; }
         public DateTime? OccupiedSince { get; set; }
         
+        [JsonIgnore]
         public ICollection<RoomMedia> Media { get; set; } = new List<RoomMedia>();
     }
 }

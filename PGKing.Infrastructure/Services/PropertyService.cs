@@ -28,6 +28,8 @@ namespace PGKing.Infrastructure.Services
                 .Include(p => p.State)
                 .Include(p => p.Flats)
                     .ThenInclude(f => f.Rooms)
+                .Include(p => p.Flats)
+                    .ThenInclude(f => f.Media)
                 .ToListAsync();
         }
 

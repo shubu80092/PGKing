@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace PGKing.Application.Entities
 {
@@ -39,6 +40,7 @@ namespace PGKing.Application.Entities
 
         public ICollection<Flat> Flats { get; set; } = new List<Flat>();
         
+        [JsonIgnore]
         public ICollection<PropertyMedia> Media { get; set; } = new List<PropertyMedia>();
     }
 }
