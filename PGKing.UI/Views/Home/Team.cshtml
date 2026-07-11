@@ -1,0 +1,56 @@
+@model IEnumerable<PGKing.Application.Entities.TeamMember>
+@{
+    ViewData["Title"] = "Our Team";
+}
+
+<section class="section-padding bg-light" style="padding-top: 150px; padding-bottom: 80px;">
+    <div class="container text-center">
+        <h6 class="text-primary fw-bold text-uppercase mb-2" style="letter-spacing: 3px;">The Minds Behind PGKing</h6>
+        <h1 class="display-3 fw-bold mb-4">Meet Our <span class="text-gradient">Team</span></h1>
+        <p class="fs-5 text-muted mx-auto" style="max-width: 600px; line-height: 1.8;">
+            A passionate group of hospitality, operations, and technology professionals dedicated to building the future of residential co-living.
+        </p>
+    </div>
+</section>
+
+<section class="section-padding" style="padding-top: 50px; padding-bottom: 100px;">
+    <div class="container">
+        <div class="row g-4 justify-content-center">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    <div class="col-lg-4 col-md-6">
+                        <div class="ox-card p-0 border-0 shadow-sm overflow-hidden h-100 text-center team-card">
+                            <div class="position-relative overflow-hidden" style="height: 320px;">
+                                <img src="@item.ImageUrl" class="w-100 h-100" style="object-fit: cover; transition: transform 0.5s ease;" alt="@item.Name - @item.Designation">
+                            </div>
+                            <div class="p-4">
+                                <h4 class="fw-bold mb-1">@item.Name</h4>
+                                <p class="text-primary small fw-semibold text-uppercase mb-3" style="letter-spacing: 1px;">@item.Designation</p>
+                                <p class="text-muted small mb-4">@item.Bio</p>
+                                <div class="d-flex justify-content-center gap-3">
+                                    @if (!string.IsNullOrEmpty(item.LinkedInUrl))
+                                    {
+                                        <a href="@item.LinkedInUrl" target="_blank" class="text-muted hover-primary"><i class="fab fa-linkedin-in"></i></a>
+                                    }
+                                    @if (!string.IsNullOrEmpty(item.Email))
+                                    {
+                                        <a href="mailto:@item.Email" class="text-muted hover-primary"><i class="fas fa-envelope"></i></a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-user-group text-muted mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <h5 class="text-muted">No team members registered yet.</h5>
+                </div>
+            }
+        </div>
+    </div>
+</section>

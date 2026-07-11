@@ -56,6 +56,8 @@ namespace PGKing.Infrastructure.Services
                 CityId = request.CityId,
                 Description = request.Description,
                 Amenities = request.Amenities,
+                Latitude = request.Latitude,
+                Longitude = request.Longitude,
                 CreatedAt = DateTime.Now,
                 VendorId = vendorId
             };
@@ -74,6 +76,8 @@ namespace PGKing.Infrastructure.Services
             property.CityId = request.CityId;
             property.Description = request.Description;
             property.Amenities = request.Amenities;
+            property.Latitude = request.Latitude;
+            property.Longitude = request.Longitude;
 
             await _propertyRepository.UpdateAsync(property);
         }

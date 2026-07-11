@@ -48,6 +48,19 @@
                         <span asp-validation-for="Address" class="text-danger small"></span>
                     </div>
 
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Latitude" class="form-label fw-semibold">Latitude (Optional)</label>
+                            <input asp-for="Latitude" type="number" step="any" class="form-control rounded-3" id="Latitude" placeholder="e.g. 28.5355" />
+                            <span asp-validation-for="Latitude" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Longitude" class="form-label fw-semibold">Longitude (Optional)</label>
+                            <input asp-for="Longitude" type="number" step="any" class="form-control rounded-3" id="Longitude" placeholder="e.g. 77.3910" />
+                            <span asp-validation-for="Longitude" class="text-danger small"></span>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label asp-for="Description" class="form-label fw-semibold">Property Description</label>
                         <textarea asp-for="Description" class="form-control rounded-3" rows="3"></textarea>
@@ -128,7 +141,7 @@
                     });
                 } else { updateMap(); }
             });
-            $('#Address, #CityId, #StateId').on('change keyup', function() { updateMap(); });
+            $('#Address, #CityId, #StateId, #Latitude, #Longitude').on('change keyup', function() { updateMap(); });
             
             $('form').submit(function() {
                 var selected = [];
@@ -139,12 +152,21 @@
             });
 
             function updateMap() {
+                var lat = $('#Latitude').val();
+                var lng = $('#Longitude').val();
                 var address = $('#Address').val();
                 var city = $('#CityId option:selected').text();
                 var state = $('#StateId option:selected').text();
-                if (address && city !== "Select City" && state !== "Select State") {
-                    var fullAddress = address + ", " + city + ", " + state;
-                    var mapUrl = "https://maps.google.com/maps?q=" + encodeURIComponent(fullAddress) + "&t=&z=15&ie=UTF8&iwloc=&output=embed";
+                
+                var query = "";
+                if (lat && lng) {
+                    query = lat + "," + lng;
+                } else if (address && city !== "Select City" && state !== "Select State") {
+                    query = address + ", " + city + ", " + state;
+                }
+
+                if (query) {
+                    var mapUrl = "https://maps.google.com/maps?q=" + encodeURIComponent(query) + "&t=&z=15&ie=UTF8&iwloc=&output=embed";
                     $('#google-map').attr('src', mapUrl);
                 }
             }

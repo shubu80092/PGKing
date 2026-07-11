@@ -1,64 +1,108 @@
 @using PGKing.Application.Entities
 @{
     ViewData["Title"] = "PGKing - Premium Living Spaces";
+    ViewData["IsHomePage"] = true;
+    
     var banners = ViewBag.Banners as List<Banner>;
     var properties = ViewBag.Properties as List<Property>;
+
+    // Staggered image resolution from banners or defaults
+    var mainHeroImg = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200";
+    var leftHeroImg = "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600";
+    var rightHeroImg = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600";
+
+    var heroTitle = "WELCOME TO PGKING";
+    var heroSubtitle = "Premium co-living spaces for modern professionals.";
+
+    if (banners != null && banners.Any())
+    {
+        heroTitle = banners[0].Title;
+        heroSubtitle = banners[0].SubTitle;
+        mainHeroImg = banners[0].ImageUrl;
+        if (banners.Count > 1) leftHeroImg = banners[1].ImageUrl;
+        if (banners.Count > 2) rightHeroImg = banners[2].ImageUrl;
+    }
 }
 
 <!-- Hero Section -->
-<section class="hero-section position-relative overflow-hidden" style="height: 90vh; min-height: 700px;">
-    @if (banners != null && banners.Any())
-    {
-        <div id="homeCarousel" class="carousel slide carousel-fade h-100" data-bs-ride="carousel">
-            <div class="carousel-inner h-100">
-                @for (int i = 0; i < banners.Count; i++)
-                {
-                    <div class="carousel-item @(i == 0 ? "active" : "") h-100">
-                        <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(to right, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.3) 100%); z-index: 1;"></div>
-                        <img src="@banners[i].ImageUrl" class="d-block w-100 h-100" style="object-fit: cover;">
-                        <div class="carousel-caption d-flex flex-column justify-content-center h-100 text-start animate-ox" style="bottom: 0; left: 10%; right: 10%; z-index: 2;">
-                            <h1 class="display-1 mb-3" style="font-weight: 900; letter-spacing: -3px;">@banners[i].Title</h1>
-                            <p class="fs-4 mb-5 opacity-90" style="max-width: 600px; font-weight: 500;">@banners[i].SubTitle</p>
-                            <div class="d-flex gap-3">
-                                <a href="#properties" class="btn-ox text-decoration-none">Discover Now</a>
-                                <a href="/Home/AboutUs" class="btn-ox-outline text-white border-white text-decoration-none">Learn More</a>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
-    }
-</section>
+<section class="luxury-hero d-flex align-items-center">
+    <!-- Sliding Background Banner Images -->
+    <div class="hero-slideshow">
+        @if (banners != null && banners.Any())
+        {
+            for (int i = 0; i < banners.Count; i++)
+            {
+                <div class="hero-slide @(i == 0 ? "active" : "")" style="background-image: url('@banners[i].ImageUrl');"></div>
+            }
+        }
+        else
+        {
+            <div class="hero-slide active" style="background-image: url('@mainHeroImg');"></div>
+            <div class="hero-slide" style="background-image: url('@leftHeroImg');"></div>
+            <div class="hero-slide" style="background-image: url('@rightHeroImg');"></div>
+        }
+    </div>
+    
+    <!-- Light contrast overlay -->
+    <div class="hero-overlay"></div>
 
-<!-- Search Overlay -->
-<div class="container px-4">
-    <div class="ox-card p-4 p-lg-5 animate-ox" style="margin-top: -100px; position: relative; z-index: 100; border: none; box-shadow: 0 30px 60px rgba(0,0,0,0.12);">
-        <form asp-action="Properties" method="get" class="row g-4 align-items-center">
-            <div class="col-lg-4">
-                <label class="small fw-bold text-muted mb-2 d-block px-1 text-uppercase">Where would you like to stay?</label>
-                <div class="d-flex align-items-center bg-light p-3 rounded-4">
-                    <i class="fas fa-search text-primary ms-2 me-3"></i>
-                    <input type="text" name="search" class="form-control border-0 bg-transparent shadow-none p-0 fw-semibold" placeholder="Locality, Landmark or PG Name">
+    <div class="container position-relative" style="z-index: 5;">
+        <div class="row text-start">
+            <div class="col-lg-8 col-md-10">
+                <div class="d-flex align-items-baseline gap-3 mb-3">
+                    <span class="luxury-subtitle text-white" style="text-shadow: 0 1px 4px rgba(0,0,0,0.25);">Welcome to PGKing</span>
+                    <div style="width: 40px; height: 1px; background: rgba(255, 255, 255, 0.6);"></div>
+                </div>
+                
+                <h1 class="luxury-title-large mb-4">
+                     @heroTitle
+                </h1>
+                
+                <p class="font-sans fs-5 mb-5 text-white opacity-75 fw-light" style="max-width: 600px; line-height: 1.6; text-shadow: 0 1px 5px rgba(0,0,0,0.3);">
+                     @heroSubtitle
+                </p>
+                
+                <div class="d-flex align-items-center gap-4">
+                    <a href="#properties" class="btn-luxury-circle">
+                         Explore <br> Stays
+                    </a>
+                    <span class="small text-white opacity-60 font-serif fs-5 d-none d-sm-inline" style="text-shadow: 0 1px 4px rgba(0,0,0,0.25);">A refined style of residential co-living.</span>
                 </div>
             </div>
-            <div class="col-lg-3">
-                <label class="small fw-bold text-muted mb-2 d-block px-1 text-uppercase">I am looking for</label>
-                <div class="d-flex align-items-center bg-light p-3 rounded-4">
-                    <i class="fas fa-user-friends text-primary ms-2 me-3"></i>
-                    <select class="form-select border-0 bg-transparent shadow-none p-0 fw-semibold">
-                        <option>Any PG Type</option>
-                        <option>Boys PG</option>
-                        <option>Girls PG</option>
-                        <option>Co-living</option>
+        </div>
+    </div>
+</section>
+
+<!-- Search Overlay Section -->
+<div class="container luxury-search-container px-4">
+    <div class="luxury-search-card">
+        <form asp-action="Properties" method="get" class="row g-4 align-items-center">
+            <div class="col-lg-4 col-md-6 search-field-group">
+                <label class="luxury-search-label">Where would you like to stay?</label>
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-search text-muted me-2" style="font-size: 0.9rem;"></i>
+                    <input type="text" name="search" class="luxury-search-input" placeholder="Locality, Landmark or PG Name...">
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 search-field-group">
+                <label class="luxury-search-label">I am looking for</label>
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-user-friends text-muted me-2" style="font-size: 0.9rem;"></i>
+                    <select name="pgType" class="luxury-search-select form-select border-0 p-0 shadow-none">
+                        <option value="">Any PG Type</option>
+                        <option value="Boys PG">Boys PG</option>
+                        <option value="Girls PG">Girls PG</option>
+                        <option value="Co-living">Co-living</option>
                     </select>
                 </div>
             </div>
-            <div class="col-lg-3">
-                <label class="small fw-bold text-muted mb-2 d-block px-1 text-uppercase">Select City</label>
-                <div class="d-flex align-items-center bg-light p-3 rounded-4">
-                    <i class="fas fa-map-marker-alt text-primary ms-2 me-3"></i>
-                    <select name="cityId" class="form-select border-0 bg-transparent shadow-none p-0 fw-semibold">
+            
+            <div class="col-lg-3 col-md-6 search-field-group">
+                <label class="luxury-search-label">Select City</label>
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-map-marker-alt text-muted me-2" style="font-size: 0.9rem;"></i>
+                    <select name="cityId" class="luxury-search-select form-select border-0 p-0 shadow-none">
                         <option value="">All Cities</option>
                         @if (ViewBag.Cities != null)
                         {
@@ -70,24 +114,409 @@
                     </select>
                 </div>
             </div>
-            <div class="col-lg-2">
-                <label class="d-none d-lg-block mb-2">&nbsp;</label>
-                <button type="submit" class="btn-ox w-100 py-3">Find Stays</button>
+            
+            <div class="col-lg-2 col-md-6 pt-lg-0">
+                <button type="submit" class="btn-luxury-search w-100">Find Stays</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Featured Section -->
-<section id="properties" class="py-5 my-5">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h6 class="text-primary fw-bold text-uppercase mb-2" style="letter-spacing: 3px;">Exclusive Collection</h6>
-            <h2 class="display-4 fw-bold">Featured Properties</h2>
-            <div class="mx-auto bg-primary mt-3" style="width: 60px; height: 4px; border-radius: 2px;"></div>
+<!-- Intro Description & Staggered Images Section -->
+<section class="py-5 my-5">
+    <div class="container py-5">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6 order-2 order-lg-1">
+                <div class="intro-image-container pe-lg-4">
+                    <img src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800" alt="Kitchen Lounge" class="intro-img-horizontal">
+                    <img src="https://images.unsplash.com/photo-1540518614846-7eded433c457?w=500" alt="Co-working space" class="intro-img-inset">
+                </div>
+            </div>
+            
+            <div class="col-lg-6 order-1 order-lg-2">
+                <div class="ps-lg-4">
+                    <span class="luxury-subtitle mb-3 d-block">Intimately Residential</span>
+                    <h2 class="luxury-title-medium text-dark mb-4">
+                        Newly Renovated Spaces & <br>Curated Communities
+                    </h2>
+                    <p class="text-muted fw-light mb-4 font-sans" style="line-height: 1.8;">
+                        As one of the only premium co-living addresses, PGKing features meticulously curated rooms and suites presenting a charming blend of contemporary design, high-end amenities, and warm hospitality. Designed for both comfort and productivity, these newly renovated spaces offer an unmatched home away from home.
+                    </p>
+                    <div class="d-flex align-items-center gap-4 mt-5">
+                        <a asp-action="AboutUs" class="btn-luxury-circle btn-luxury-circle-dark">
+                            Learn <br> More
+                        </a>
+                        <span class="small text-muted font-serif fs-5 italic">Tour our gallery to explore the luxury stay experience.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Stays (Horizontal Offers Slider Layout) -->
+<section id="properties" class="py-5 bg-white">
+    <div class="container py-5">
+        <div class="stays-slider-header">
+            <div>
+                <span class="luxury-subtitle mb-2 d-block">Exclusive Collection</span>
+                <h2 class="luxury-title-medium text-dark m-0">Featured Stays</h2>
+            </div>
+            
+            <div class="stays-slider-controls">
+                <a asp-action="Properties" class="btn-luxury-circle btn-luxury-circle-dark me-3" style="width: 80px; height: 80px; font-size: 0.6rem;">
+                    View <br> All
+                </a>
+                <button class="stays-slider-arrow prev-arrow" aria-label="Previous stays">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="stays-slider-arrow next-arrow" aria-label="Next stays">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
         </div>
         
-        <div class="row g-4 pt-4">
+        <div class="stays-slider-container-outer">
+            <div class="stays-slider">
+                @if (properties != null && properties.Any())
+                {
+                    foreach (var property in properties)
+                    {
+                        var minRent = property.Flats?.SelectMany(f => f.Rooms).Any() == true 
+                                      ? property.Flats.SelectMany(f => f.Rooms).Min(r => r.Rent) 
+                                      : 0;
+                        
+                        var displayImg = property.ImageUrl;
+                        if (string.IsNullOrEmpty(displayImg)) {
+                            displayImg = property.Media?.FirstOrDefault()?.FilePath 
+                                         ?? property.Flats?.SelectMany(f => f.Media).FirstOrDefault()?.FilePath;
+                        }
+                        if (string.IsNullOrEmpty(displayImg)) {
+                            displayImg = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800";
+                        }
+
+                        <div class="stay-card">
+                            <div class="stay-card-img-wrapper">
+                                <img src="@displayImg" class="stay-card-img" alt="@property.Title">
+                                <div class="stay-card-badge">
+                                    <i class="fas fa-check-circle me-1" style="font-size: 0.7rem;"></i> Verified
+                                </div>
+                            </div>
+                            <div class="stay-card-content">
+                                <h3 class="stay-card-title">@property.Title</h3>
+                                <div class="stay-card-meta">
+                                    <span class="stay-card-badge-small">
+                                        <i class="fas fa-bed me-1"></i> @(property.Flats?.SelectMany(f => f.Rooms).Count() ?? 0) Rooms
+                                    </span>
+                                    <span class="stay-card-badge-small">
+                                        <i class="fas fa-shield-alt me-1"></i> Premium
+                                    </span>
+                                </div>
+                                <p class="stay-card-address">
+                                    <i class="fas fa-map-marker-alt me-1 text-muted" style="font-size: 0.8rem;"></i> @property.Address
+                                </p>
+                                <div class="stay-card-footer">
+                                    <div>
+                                        <span class="stay-card-price-label">Starts from</span>
+                                        <span class="stay-card-price">@(minRent > 0 ? "₹" + minRent.ToString("N0") : "Contact")</span>
+                                    </div>
+                                    <a asp-action="PropertyDetails" asp-route-id="@property.Id" class="btn-luxury-link">
+                                        View Stay <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <!-- Mockup placeholders if database is empty -->
+                    @for (int i = 1; i <= 3; i++)
+                    {
+                        <div class="stay-card">
+                            <div class="stay-card-img-wrapper">
+                                <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800" class="stay-card-img" alt="Luxury Suite">
+                                <div class="stay-card-badge">
+                                    <i class="fas fa-check-circle me-1"></i> Verified
+                                </div>
+                            </div>
+                            <div class="stay-card-content">
+                                <h3 class="stay-card-title">Premium Suite Bhandup</h3>
+                                <div class="stay-card-meta">
+                                    <span class="stay-card-badge-small"><i class="fas fa-bed me-1"></i> 4 Rooms</span>
+                                    <span class="stay-card-badge-small"><i class="fas fa-shield-alt me-1"></i> Luxury</span>
+                                </div>
+                                <p class="stay-card-address"><i class="fas fa-map-marker-alt me-1 text-muted"></i> Station Road, Bhandup West, Mumbai</p>
+                                <div class="stay-card-footer">
+                                    <div>
+                                        <span class="stay-card-price-label">Starts from</span>
+                                        <span class="stay-card-price">₹12,500</span>
+                                    </div>
+                                    <a href="#" class="btn-luxury-link">
+                                        View Stay <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Map Explorer Section -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<section class="luxury-map-explorer-section py-5 bg-light" id="map-explorer">
+    <div class="container py-3">
+        <div class="text-center mb-5">
+            <span class="luxury-subtitle mb-2 d-block">Neighborhood Explorer</span>
+            <h2 class="luxury-title-medium text-dark">Interactive Map Directory</h2>
+            <div class="mx-auto mt-3" style="width: 50px; height: 1px; background: var(--luxury-burgundy);"></div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left Listings Panel -->
+            <div class="col-lg-5 col-md-12">
+                <div class="explorer-listings-pane custom-scrollbar" style="max-height: 650px; overflow-y: auto; padding-right: 10px;">
+                    @if (properties != null && properties.Any())
+                    {
+                        foreach (var property in properties)
+                        {
+                            var minRent = property.Flats?.SelectMany(f => f.Rooms).Any() == true 
+                                          ? property.Flats.SelectMany(f => f.Rooms).Min(r => r.Rent) 
+                                          : 0;
+                            
+                            var displayImg = property.ImageUrl;
+                            if (string.IsNullOrEmpty(displayImg)) {
+                                displayImg = property.Media?.FirstOrDefault()?.FilePath 
+                                             ?? property.Flats?.SelectMany(f => f.Media).FirstOrDefault()?.FilePath;
+                            }
+                            if (string.IsNullOrEmpty(displayImg)) {
+                                displayImg = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800";
+                            }
+
+                            var rating = 3.5 + (property.Id % 15) / 10.0;
+                            var reviewsCount = 12 + (property.Id * 17) % 300;
+                            var desc = string.IsNullOrEmpty(property.Description) ? "Premium living spaces for modern professionals." : property.Description;
+                            if (desc.Length > 85) desc = desc.Substring(0, 82) + "...";
+
+                            // Get tags from property amenities
+                            var tagsList = new List<string>();
+                            if (!string.IsNullOrEmpty(property.Amenities))
+                            {
+                                tagsList = property.Amenities.Split(',').Select(t => t.Trim()).Take(2).ToList();
+                            }
+                            if (tagsList.Count < 2)
+                            {
+                                if (!tagsList.Contains("Free Wi-Fi")) tagsList.Add("Free Wi-Fi");
+                                if (tagsList.Count < 2 && !tagsList.Contains("Free parking")) tagsList.Add("Free parking");
+                            }
+
+                            <div class="explorer-list-card" id="explorer-card-@property.Id" data-id="@property.Id">
+                                <!-- Card Image slider wrapper -->
+                                <div class="explorer-card-img-wrapper">
+                                    <img src="@displayImg" class="explorer-card-img" alt="@property.Title">
+                                    <!-- Image slider indicators/dots -->
+                                    <div class="img-slider-dots">
+                                        <span class="dot active"></span>
+                                        <span class="dot"></span>
+                                        <span class="dot"></span>
+                                    </div>
+                                    <!-- Image slider navigation arrows -->
+                                    <button class="img-slider-arrow prev" onclick="event.stopPropagation()"><i class="fas fa-chevron-left"></i></button>
+                                    <button class="img-slider-arrow next" onclick="event.stopPropagation()"><i class="fas fa-chevron-right"></i></button>
+                                </div>
+
+                                <!-- Card Content -->
+                                <div class="explorer-card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <h4 class="explorer-card-title text-truncate" style="max-width: 70%;" title="@property.Title">@property.Title</h4>
+                                        <span class="explorer-card-price text-nowrap">@(minRent > 0 ? "₹" + minRent.ToString("N0") : "Contact")</span>
+                                    </div>
+
+                                    <!-- Rating details -->
+                                    <div class="explorer-card-rating">
+                                        <span class="rating-value text-warning">@rating.ToString("F1")</span>
+                                        <span class="rating-stars me-2">
+                                            @for(var s = 1; s <= 5; s++)
+                                            {
+                                                if (s <= Math.Round(rating)) { <i class="fas fa-star text-warning"></i> }
+                                                else { <i class="far fa-star text-muted"></i> }
+                                            }
+                                        </span>
+                                        <span class="rating-reviews">(@reviewsCount)</span>
+                                    </div>
+
+                                    <p class="explorer-card-desc">@desc</p>
+
+                                    <!-- Tags list with icons -->
+                                    <div class="explorer-card-tags">
+                                        @foreach(var tag in tagsList)
+                                        {
+                                            var iconClass = "fa-check-circle";
+                                            if (tag.ToLower().Contains("wi-fi")) iconClass = "fa-wifi";
+                                            else if (tag.ToLower().Contains("parking")) iconClass = "fa-parking";
+                                            else if (tag.ToLower().Contains("kitchen") || tag.ToLower().Contains("gas")) iconClass = "fa-utensils";
+                                            else if (tag.ToLower().Contains("bed")) iconClass = "fa-bed";
+                                            else if (tag.ToLower().Contains("washing")) iconClass = "fa-soap";
+                                            else if (tag.ToLower().Contains("housekeeping") || tag.ToLower().Contains("clean")) iconClass = "fa-broom";
+                                            else if (tag.ToLower().Contains("security") || tag.ToLower().Contains("secure")) iconClass = "fa-shield-alt";
+
+                                            <span class="tag-badge">
+                                                <i class="fas @iconClass me-1"></i> @tag
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <!-- Placeholder Mockup properties -->
+                        @for (int i = 1; i <= 3; i++)
+                        {
+                            var title = i == 1 ? "Dharam villa Guest House" : i == 2 ? "Hotel Noida International" : "Hotel White Elephant Noida";
+                            var price = i == 1 ? "₹1,438" : i == 2 ? "₹1,189" : "₹1,725";
+                            var rating = i == 1 ? "3.7" : i == 2 ? "3.6" : "3.4";
+                            var reviews = i == 1 ? "279" : i == 2 ? "3.3K" : "5";
+                            var desc = i == 1 ? "Humble lodging with a casual eatery." : i == 2 ? "Casual lodging offering free breakfast." : "Comfortable stays with professional service.";
+                            var img = i == 1 ? "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800" : i == 2 ? "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800" : "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800";
+
+                            <div class="explorer-list-card" id="explorer-card-mock-@i" data-id="mock-@i">
+                                <div class="explorer-card-img-wrapper">
+                                    <img src="@img" class="explorer-card-img" alt="@title">
+                                    <div class="img-slider-dots">
+                                        <span class="dot active"></span>
+                                        <span class="dot"></span>
+                                        <span class="dot"></span>
+                                    </div>
+                                    <button class="img-slider-arrow prev" onclick="event.stopPropagation()"><i class="fas fa-chevron-left"></i></button>
+                                    <button class="img-slider-arrow next" onclick="event.stopPropagation()"><i class="fas fa-chevron-right"></i></button>
+                                </div>
+                                <div class="explorer-card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <h4 class="explorer-card-title text-truncate" style="max-width: 70%;">@title</h4>
+                                        <span class="explorer-card-price text-nowrap">@price</span>
+                                    </div>
+                                    <div class="explorer-card-rating">
+                                        <span class="rating-value text-warning">@rating</span>
+                                        <span class="rating-stars me-2">
+                                            <i class="fas fa-star text-warning"></i>
+                                            <i class="fas fa-star text-warning"></i>
+                                            <i class="fas fa-star text-warning"></i>
+                                            @if (i == 3) { <i class="far fa-star text-muted"></i> } else { <i class="fas fa-star-half-alt text-warning"></i> }
+                                            <i class="far fa-star text-muted"></i>
+                                        </span>
+                                        <span class="rating-reviews">(@reviews)</span>
+                                    </div>
+                                    <p class="explorer-card-desc">@desc</p>
+                                    <div class="explorer-card-tags">
+                                        <span class="tag-badge"><i class="fas fa-parking me-1"></i> Free parking</span>
+                                        <span class="tag-badge"><i class="fas fa-wifi me-1"></i> Free Wi-Fi</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+
+                    <div class="text-center mt-4 mb-2">
+                        <a asp-action="Properties" class="btn-see-more-map">
+                            See more <i class="fas fa-chevron-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Map Panel -->
+            <div class="col-lg-7 col-md-12">
+                <!-- Sticky interactive map container -->
+                <div class="map-wrapper shadow-lg rounded-4 overflow-hidden" style="position: sticky; top: 90px; z-index: 10;">
+                    <div id="home-explorer-map" style="height: 650px; background: #1a1a1a;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Amenities & Features Section -->
+<section class="luxury-features-section py-5">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <span class="luxury-subtitle mb-2 d-block">Premium Living Amenities</span>
+            <h2 class="luxury-title-medium text-dark">Designed for Your Lifestyle</h2>
+            <div class="mx-auto mt-3" style="width: 50px; height: 1px; background: var(--luxury-burgundy);"></div>
+        </div>
+        
+        <div class="row g-5 pt-4 text-center">
+            <div class="col-lg-3 col-md-6 feature-item">
+                <div class="feature-badge-circle">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3 class="feature-title">Secured Living</h3>
+                <p class="feature-desc px-3">24/7 CCTV surveillance, biometric access, and expert security for total peace of mind.</p>
+            </div>
+            <div class="col-lg-3 col-md-6 feature-item">
+                <div class="feature-badge-circle">
+                    <i class="fas fa-wifi"></i>
+                </div>
+                <h3 class="feature-title">Hyper-Connected</h3>
+                <p class="feature-desc px-3">High-speed, enterprise-grade Wi-Fi connectivity throughout the residence.</p>
+            </div>
+            <div class="col-lg-3 col-md-6 feature-item">
+                <div class="feature-badge-circle">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <h3 class="feature-title">Gourmet Meals</h3>
+                <p class="feature-desc px-3">Freshly prepared, hygiene-focused, home-style meals served daily in our common spaces.</p>
+            </div>
+            <div class="col-lg-3 col-md-6 feature-item">
+                <div class="feature-badge-circle">
+                    <i class="fas fa-broom"></i>
+                </div>
+                <h3 class="feature-title">Expert Cleaning</h3>
+                <p class="feature-desc px-3">Professional regular housekeeping to maintain neat, pristine, and sanitized spaces.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 0. Hero Background Slideshow code
+            const slides = document.querySelectorAll('.hero-slide');
+            if (slides.length > 1) {
+                let currentSlide = 0;
+                setInterval(() => {
+                    slides[currentSlide].classList.remove('active');
+                    currentSlide = (currentSlide + 1) % slides.length;
+                    slides[currentSlide].classList.add('active');
+                }, 5000);
+            }
+
+            // 1. Featured stays slider code
+            const slider = document.querySelector('.stays-slider');
+            const prevBtn = document.querySelector('.prev-arrow');
+            const nextBtn = document.querySelector('.next-arrow');
+            
+            if (slider && prevBtn && nextBtn) {
+                prevBtn.addEventListener('click', () => {
+                    const cardWidth = slider.querySelector('.stay-card').offsetWidth + 30;
+                    slider.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+                });
+                
+                nextBtn.addEventListener('click', () => {
+                    const cardWidth = slider.querySelector('.stay-card').offsetWidth + 30;
+                    slider.scrollBy({ left: cardWidth, behavior: 'smooth' });
+                });
+            }
+
+            // 2. Map Explorer script initialization
+            var mapProperties = [];
+            
             @if (properties != null && properties.Any())
             {
                 foreach (var property in properties)
@@ -95,7 +524,6 @@
                     var minRent = property.Flats?.SelectMany(f => f.Rooms).Any() == true 
                                   ? property.Flats.SelectMany(f => f.Rooms).Min(r => r.Rent) 
                                   : 0;
-                    
                     var displayImg = property.ImageUrl;
                     if (string.IsNullOrEmpty(displayImg)) {
                         displayImg = property.Media?.FirstOrDefault()?.FilePath 
@@ -105,73 +533,164 @@
                         displayImg = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800";
                     }
 
-                    <div class="col-lg-4 col-md-6">
-                        <div class="ox-card h-100 animate-ox">
-                            <div class="position-relative overflow-hidden" style="height: 280px; border-top-left-radius: 24px; border-top-right-radius: 24px;">
-                                <img src="@displayImg" class="w-100 h-100" style="object-fit: cover; transition: transform 0.6s ease;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                                <div class="position-absolute top-0 end-0 m-4">
-                                    <span class="badge bg-white text-dark shadow-sm px-3 py-2 rounded-pill fw-bold" style="font-size: 0.75rem;"><i class="fas fa-check-circle text-primary me-1"></i> Verified</span>
-                                </div>
-                            </div>
-                            <div class="p-4">
-                                <h4 class="mb-2">@property.Title</h4>
-                                <div class="mb-3 d-flex gap-2">
-                                    <span class="badge bg-light text-muted fw-bold px-3 py-2 rounded-pill" style="font-size: 0.7rem;"><i class="fas fa-bed me-1 text-primary"></i> @(property.Flats?.SelectMany(f => f.Rooms).Count() ?? 0) Options</span>
-                                    <span class="badge bg-light text-muted fw-bold px-3 py-2 rounded-pill" style="font-size: 0.7rem;"><i class="fas fa-shield-alt me-1 text-primary"></i> Premium</span>
-                                </div>
-                                <p class="text-muted small mb-4"><i class="fas fa-location-arrow text-primary me-2"></i> @property.Address</p>
-                                
-                                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                                    <div>
-                                        <small class="text-muted d-block" style="font-size: 0.7rem; font-weight: 600; text-uppercase;">Starts from</small>
-                                        <span class="fw-bold text-primary fs-4">@(minRent > 0 ? "₹" + minRent.ToString("N0") : "Contact")</span>
-                                    </div>
-                                    <a asp-action="PropertyDetails" asp-route-id="@property.Id" class="btn btn-primary rounded-pill px-4 fw-bold">View Stay</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    double lat = property.Latitude ?? 28.5355;
+                    double lng = property.Longitude ?? 77.3910;
+                    if (!property.Latitude.HasValue || !property.Longitude.HasValue) {
+                        if (property.City?.Name == "Mumbai") { lat = 19.0760; lng = 72.8777; }
+                        else if (property.City?.Name == "Pune") { lat = 18.5204; lng = 73.8567; }
+                        else if (property.City?.Name == "Bengaluru") { lat = 12.9716; lng = 77.5946; }
+                        else if (property.City?.Name == "New Delhi") { lat = 28.6139; lng = 77.2090; }
+                        
+                        lat += ((property.Id * 17) % 100 - 50) / 1500.0;
+                        lng += ((property.Id * 31) % 100 - 50) / 1500.0;
+                    }
+
+                    var rating = 3.5 + (property.Id % 15) / 10.0;
+                    var reviewsCount = 12 + (property.Id * 17) % 300;
+                    
+                    @:mapProperties.push({
+                    @:    id: @property.Id,
+                    @:    title: "@Html.Raw(property.Title.Replace("\"", "\\\""))",
+                    @:    lat: @lat,
+                    @:    lng: @lng,
+                    @:    price: @minRent,
+                    @:    rating: @rating.ToString("F1"),
+                    @:    reviews: @reviewsCount
+                    @:});
                 }
             }
-        </div>
-        <div class="text-center mt-5 pt-4">
-            <a asp-action="Properties" class="btn-ox-outline text-decoration-none">Explore All Properties <i class="fas fa-arrow-right ms-2"></i></a>
-        </div>
-    </div>
-</section>
+            else
+            {
+                // Fallback mockup coordinates
+                @:mapProperties = [
+                @:    { id: "mock-1", title: "Dharam villa Guest House", lat: 28.5385, lng: 77.3880, price: 1438, rating: 3.7, reviews: 279 },
+                @:    { id: "mock-2", title: "Hotel Noida International", lat: 28.5320, lng: 77.3940, price: 1189, rating: 3.6, reviews: 3300 },
+                @:    { id: "mock-3", title: "Hotel White Elephant Noida", lat: 28.5420, lng: 77.3820, price: 1725, rating: 3.4, reviews: 5 }
+                @:];
+            }
 
-<!-- Features Section -->
-<section class="py-5 bg-white">
-    <div class="container py-5">
-        <div class="row g-5">
-            <div class="col-lg-3 col-md-6 text-center">
-                <div class="bg-primary-soft text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; background: rgba(0, 82, 255, 0.08);">
-                    <i class="fas fa-shield-alt fs-2"></i>
-                </div>
-                <h5 class="fw-bold">Secured Living</h5>
-                <p class="text-muted small px-3">24/7 Security, CCTV, and verified residents for peace of mind.</p>
-            </div>
-            <div class="col-lg-3 col-md-6 text-center">
-                <div class="bg-primary-soft text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; background: rgba(0, 82, 255, 0.08);">
-                    <i class="fas fa-wifi fs-2"></i>
-                </div>
-                <h5 class="fw-bold">Hyper-Connected</h5>
-                <p class="text-muted small px-3">Blazing fast internet connectivity in every corner of the stay.</p>
-            </div>
-            <div class="col-lg-3 col-md-6 text-center">
-                <div class="bg-primary-soft text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; background: rgba(0, 82, 255, 0.08);">
-                    <i class="fas fa-utensils fs-2"></i>
-                </div>
-                <h5 class="fw-bold">Gourmet Meals</h5>
-                <p class="text-muted small px-3">Nutritious, home-style hygiene-focused meals served daily.</p>
-            </div>
-            <div class="col-lg-3 col-md-6 text-center">
-                <div class="bg-primary-soft text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; background: rgba(0, 82, 255, 0.08);">
-                    <i class="fas fa-broom fs-2"></i>
-                </div>
-                <h5 class="fw-bold">Expert Clean</h5>
-                <p class="text-muted small px-3">Professional housekeeping services to keep your stay spotless.</p>
-            </div>
-        </div>
-    </div>
-</section>
+            if (document.getElementById('home-explorer-map')) {
+                // Initialize map
+                var map = L.map('home-explorer-map', {
+                    zoomControl: false,
+                    attributionControl: false
+                });
+
+                // Add zoom control at bottom right
+                L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+                // Load CartoDB Voyager clear tiles
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 20
+                }).addTo(map);
+
+                var markers = {};
+                var latlngs = [];
+                var activePropertyId = null;
+
+                // Sync highlights
+                function highlightProperty(id, shouldCenter) {
+                    activePropertyId = id;
+                    
+                    // Highlight list card
+                    $('.explorer-list-card').removeClass('active');
+                    const card = $('#explorer-card-' + id);
+                    if (card.length) {
+                        card.addClass('active');
+                        // Smooth scroll within listings pane
+                        const pane = $('.explorer-listings-pane');
+                        pane.animate({
+                            scrollTop: pane.scrollTop() + (card.position().top - pane.position().top) - 15
+                        }, 250);
+                    }
+
+                    // Highlight map marker pin
+                    $('.map-price-pin').removeClass('selected');
+                    $('#marker-pin-' + id).addClass('selected');
+
+                    // Open marker popup
+                    if (markers[id]) {
+                        markers[id].openPopup();
+                        if (shouldCenter) {
+                            map.setView(markers[id].getLatLng(), 15, { animate: true });
+                        }
+                    }
+                }
+
+                // Add pins to map
+                mapProperties.forEach(function(prop) {
+                    var displayPrice = prop.price > 0 ? '₹' + prop.price.toLocaleString('en-IN') : 'Contact';
+                    
+                    var markerHtml = '<div class="map-price-pin" id="marker-pin-' + prop.id + '">' +
+                                        '<i class="fas fa-bed me-1"></i>' +
+                                        '<span>' + displayPrice + '</span>' +
+                                     '</div>';
+                    
+                    var customIcon = L.divIcon({
+                        html: markerHtml,
+                        className: 'custom-price-marker-wrapper',
+                        iconSize: [85, 30],
+                        iconAnchor: [42, 15]
+                    });
+
+                    var marker = L.marker([prop.lat, prop.lng], { icon: customIcon }).addTo(map);
+                    
+                    // Premium dark style popup
+                    var popupHtml = '<div class="map-tooltip-dark">' +
+                                        '<h6 class="mb-1 text-white fw-bold">' + prop.title + '</h6>' +
+                                        '<div class="rating d-flex align-items-center gap-1 font-sans text-warning" style="font-size: 0.8rem;">' +
+                                            '<span class="stars font-serif">★</span>' +
+                                            '<span class="value fw-bold text-white">' + prop.rating + '</span>' +
+                                            '<span class="count text-muted">(' + prop.reviews + ')</span>' +
+                                        '</div>' +
+                                    '</div>';
+                    
+                    marker.bindPopup(popupHtml, {
+                        closeButton: false,
+                        offset: L.point(0, -5),
+                        className: 'dark-theme-popup'
+                    });
+
+                    markers[prop.id] = marker;
+                    latlngs.push([prop.lat, prop.lng]);
+
+                    // Marker click handler (direct navigation for real properties, scroll-focus for mock properties)
+                    marker.on('click', function() {
+                        if (String(prop.id).indexOf('mock') === -1) {
+                            window.location.href = '/Home/PropertyDetails/' + prop.id;
+                        } else {
+                            highlightProperty(prop.id, true);
+                        }
+                    });
+
+                    // Hover tooltip control
+                    marker.on('mouseover', function() {
+                        marker.openPopup();
+                        $('#marker-pin-' + prop.id).addClass('hovered');
+                    });
+                    
+                    marker.on('mouseout', function() {
+                        if (activePropertyId !== prop.id) {
+                            marker.closePopup();
+                        }
+                        $('#marker-pin-' + prop.id).removeClass('hovered');
+                    });
+                });
+
+                // Fit bounds
+                if (latlngs.length > 0) {
+                    var bounds = L.latLngBounds(latlngs);
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                } else {
+                    map.setView([28.5355, 77.3910], 13);
+                }
+
+                // Card click handler
+                $('.explorer-list-card').on('click', function() {
+                    var id = $(this).data('id');
+                    highlightProperty(id, true);
+                });
+            }
+        });
+    </script>
+}

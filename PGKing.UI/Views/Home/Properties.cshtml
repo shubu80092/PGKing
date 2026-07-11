@@ -4,6 +4,116 @@
     var cities = ViewBag.Cities as List<PGKing.Application.Entities.City>;
 }
 
+<style>
+    /* Custom Luxury Property Card Styles */
+    .property-card {
+        background-color: var(--luxury-cream-soft);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 16px;
+        overflow: hidden;
+        height: 100%;
+        transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .property-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 35px rgba(0, 82, 255, 0.06);
+        border-color: rgba(0, 82, 255, 0.15);
+    }
+    .property-image-container {
+        height: 280px;
+        position: relative;
+        overflow: hidden;
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+    }
+    .property-card-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .property-card:hover .property-card-img {
+        transform: scale(1.05);
+    }
+    .verified-badge {
+        background: rgba(255, 255, 255, 0.95);
+        color: var(--ox-primary);
+        border-radius: 50px;
+        padding: 6px 14px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        display: inline-flex;
+        align-items: center;
+    }
+    .property-card-body {
+        padding: 24px;
+    }
+    .property-card-title {
+        font-family: 'Cormorant Garamond', serif !important;
+        font-weight: 450 !important;
+        font-size: 1.85rem;
+        color: var(--luxury-text-dark);
+        margin-bottom: 0.75rem;
+        letter-spacing: -0.01em;
+    }
+    .prop-badge {
+        background-color: var(--ox-primary-soft);
+        color: var(--ox-primary);
+        border-radius: 50px;
+        padding: 6px 14px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+    }
+    .location-text {
+        font-size: 0.9rem;
+        color: #8E8A84 !important;
+        font-weight: 500;
+        margin-bottom: 1.25rem !important;
+    }
+    .location-text i {
+        color: #4B5563 !important;
+    }
+    .card-divider {
+        border-top: 1px solid rgba(0, 82, 255, 0.08);
+        margin: 1.25rem 0;
+        opacity: 1;
+    }
+    .price-label {
+        display: block;
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+        color: var(--luxury-muted);
+        font-weight: 600;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+    }
+    .price-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--ox-primary);
+        font-family: 'Inter', sans-serif;
+    }
+    .view-stay-btn {
+        color: var(--ox-primary);
+        font-weight: 700;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+    .view-stay-btn:hover {
+        color: var(--ox-primary-dark);
+        transform: translateX(4px);
+    }
+</style>
+
 <div class="container py-5 mt-5">
     <!-- Header Section -->
     <div class="text-center mb-5 pb-4 animate-ox">
@@ -11,9 +121,9 @@
         <h1 class="display-3 fw-bold mb-4">Find Your Perfect <span class="text-gradient">Stay</span></h1>
         
         <!-- Premium Search Bar -->
-        <div class="ox-card d-inline-flex p-2 mt-4 shadow-lg border-0" style="border-radius: 100px; max-width: 900px; width: 100%;">
+        <div class="ox-card d-inline-flex p-2 mt-4 shadow-lg border-0" style="border-radius: 100px; max-width: 1000px; width: 100%;">
             <form asp-action="Properties" method="get" class="d-flex flex-column flex-lg-row align-items-center w-100 gap-2">
-                <div class="d-flex align-items-center px-4 py-2 flex-grow-1 border-end-lg" style="min-width: 200px;">
+                <div class="d-flex align-items-center px-4 py-2 flex-grow-1 border-end-lg" style="min-width: 180px;">
                     <i class="fas fa-map-marker-alt text-primary me-3 fs-5"></i>
                     <select name="cityId" class="form-select border-0 bg-transparent fw-bold shadow-none" style="cursor: pointer;">
                         <option value="">All Cities</option>
@@ -21,14 +131,30 @@
                         {
                             foreach (var city in cities)
                             {
-                                <option value="@city.Id">@city.Name</option>
+                                if (ViewBag.CurrentCityId == city.Id)
+                                {
+                                    <option value="@city.Id" selected="selected">@city.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@city.Id">@city.Name</option>
+                                }
                             }
                         }
                     </select>
                 </div>
+                <div class="d-flex align-items-center px-4 py-2 flex-grow-1 border-end-lg" style="min-width: 180px;">
+                    <i class="fas fa-user-friends text-primary me-3 fs-5"></i>
+                    <select name="pgType" class="form-select border-0 bg-transparent fw-bold shadow-none" style="cursor: pointer;">
+                        <option value="" selected="@(string.IsNullOrEmpty(ViewBag.CurrentPgType) ? "selected" : null)">Any PG Type</option>
+                        <option value="Boys PG" selected="@(ViewBag.CurrentPgType == "Boys PG" ? "selected" : null)">Boys PG</option>
+                        <option value="Girls PG" selected="@(ViewBag.CurrentPgType == "Girls PG" ? "selected" : null)">Girls PG</option>
+                        <option value="Co-living" selected="@(ViewBag.CurrentPgType == "Co-living" ? "selected" : null)">Co-living</option>
+                    </select>
+                </div>
                 <div class="d-flex align-items-center px-4 py-2 flex-grow-1">
                     <i class="fas fa-search text-muted me-3 fs-5"></i>
-                    <input type="text" name="search" class="form-control border-0 bg-transparent fw-semibold shadow-none" placeholder="Search by area or PG name...">
+                    <input type="text" name="search" value="@ViewBag.CurrentSearch" class="form-control border-0 bg-transparent fw-semibold shadow-none" placeholder="Search by area or PG name...">
                 </div>
                 <button type="submit" class="btn-ox py-3 px-5">Search Stays</button>
             </form>
@@ -64,37 +190,49 @@
                 }
 
                 <div class="col-lg-4 col-md-6">
-                    <div class="ox-card h-100 animate-ox">
-                        <div class="position-relative overflow-hidden" style="height: 260px; border-top-left-radius: 24px; border-top-right-radius: 24px;">
-                            <img src="@displayImg" class="w-100 h-100" style="object-fit: cover; transition: transform 0.6s ease;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                            <div class="position-absolute top-0 start-0 m-3">
-                                <span class="badge bg-white text-primary px-3 py-2 rounded-pill shadow-sm fw-bold border-0" style="font-size: 0.7rem;">Verified Stay</span>
-                            </div>
-                            <div class="position-absolute bottom-0 end-0 m-3">
-                                <span class="badge bg-primary text-white px-3 py-2 rounded-pill shadow-lg fw-bold" style="font-size: 0.75rem;">Premium Listing</span>
+                    <div class="property-card">
+                        <div class="property-image-container">
+                            <img src="@displayImg" class="property-card-img" alt="@property.Title">
+                            <div class="position-absolute top-0 end-0 m-3">
+                                <span class="verified-badge"><i class="fas fa-check-circle me-2 text-primary"></i>VERIFIED</span>
                             </div>
                         </div>
-                        <div class="p-4">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h4 class="fw-bold mb-0 text-truncate" style="max-width: 65%;">@property.Title</h4>
-                                <div class="text-primary fw-bold fs-5">
-                                    @if (minRent > 0) {
-                                        @:₹@minRent.ToString("N0")<small class="text-muted fw-normal" style="font-size: 0.7rem">/mo</small>
-                                    } else {
-                                        @:Contact
-                                    }
-                                </div>
-                            </div>
-                            <p class="text-muted small mb-4"><i class="fas fa-location-arrow text-primary me-2"></i> @property.Address, @property.City?.Name</p>
+                        <div class="property-card-body">
+                            <h4 class="property-card-title text-truncate" title="@property.Title">@property.Title</h4>
                             
-                            <div class="d-flex flex-wrap gap-2 mb-4">
-                                <span class="badge bg-light text-muted px-2 py-2 rounded-3 border-0 small"><i class="fas fa-wifi text-primary me-1"></i> Wifi</span>
-                                <span class="badge bg-light text-muted px-2 py-2 rounded-3 border-0 small"><i class="fas fa-snowflake text-primary me-1"></i> AC</span>
-                                <span class="badge bg-light text-muted px-2 py-2 rounded-3 border-0 small"><i class="fas fa-utensils text-primary me-1"></i> Meals</span>
-                                <span class="badge bg-light text-muted px-2 py-2 rounded-3 border-0 small"><i class="fas fa-plus text-primary"></i> 5+ More</span>
+                            @{
+                                var totalRooms = property.Flats?.SelectMany(f => f.Rooms).Count() ?? 0;
+                            }
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="prop-badge">
+                                    <i class="fas fa-bed me-2"></i>@(totalRooms > 0 ? $"{totalRooms} Rooms" : "Rooms Available")
+                                </span>
+                                <span class="prop-badge">
+                                    <i class="fas fa-shield-alt me-2"></i>Premium
+                                </span>
                             </div>
-
-                            <a asp-action="PropertyDetails" asp-route-id="@property.Id" class="btn btn-outline-primary w-100 rounded-pill fw-bold py-2 border-2">Explore Options</a>
+                            
+                            <p class="location-text text-truncate" title="@property.Address, @property.City?.Name">
+                                <i class="fas fa-map-marker-alt me-2"></i>@property.Address, @property.City?.Name
+                            </p>
+                            
+                            <hr class="card-divider">
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="price-label">Starts From</span>
+                                    <div class="price-value">
+                                        @if (minRent > 0) {
+                                            @:₹@minRent.ToString("N0")
+                                        } else {
+                                            @:Contact
+                                        }
+                                    </div>
+                                </div>
+                                <a asp-action="PropertyDetails" asp-route-id="@property.Id" class="view-stay-btn">
+                                    View Stay <i class="fas fa-arrow-right ms-2"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -5,20 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - PGKing</title>
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/PGKing.UI.styles.css" asp-append-version="true" />
+    @if (ViewData["IsHomePage"] != null)
+    {
+        <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
+    }
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+<body class="@(ViewData["IsHomePage"] != null ? "home-page-body" : "")">
+    <header class="fixed-top header-wrapper">
+        <!-- Topbar for Contact Details and Social Links -->
+        <div class="header-topbar py-2 d-none d-lg-block">
+            <div class="container d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-4">
+                    <span class="text-white-50"><i class="fas fa-phone-alt me-2 text-primary"></i> +91 96285 11173</span>
+                    <span class="text-white-50"><i class="fas fa-envelope me-2 text-primary"></i> info@pgking.in</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <a href="https://wa.me/919628511173" target="_blank" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <nav class="navbar navbar-expand-lg navbar-light @(ViewData["IsHomePage"] != null ? "navbar-luxury" : "")">
             <div class="container">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <img src="~/images/logo.png" alt="PGKing Logo" height="60">
+                    <img src="~/images/logo.png" alt="PGKing Logo" class="navbar-logo">
                 </a>
                 <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav"
                         aria-expanded="false" aria-label="Toggle navigation">
@@ -33,10 +53,16 @@
                             <a class="nav-link fw-semibold px-3" asp-controller="Home" asp-action="Properties">Properties</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link fw-semibold px-3" asp-controller="Home" asp-action="Services">Services</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fw-semibold px-3" asp-controller="Home" asp-action="Team">Team</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link fw-semibold px-3" asp-controller="Home" asp-action="AboutUs">About Us</a>
                         </li>
-                        <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
-                            <a class="btn btn-primary rounded-pill px-4" asp-controller="Admin" asp-action="Dashboard">Admin Login</a>
+                        <li class="nav-item">
+                            <a class="nav-link fw-semibold px-3" asp-controller="Home" asp-action="Contact">Contact Us</a>
                         </li>
                     </ul>
                 </div>
@@ -44,7 +70,7 @@
         </nav>
     </header>
     
-    <main role="main" style="padding-top: 100px;">
+    <main role="main" style="@(ViewData["IsHomePage"] != null ? "" : "padding-top: 120px;")">
         @RenderBody()
     </main>
 
@@ -80,32 +106,39 @@
         }
     </style>
 
-    <footer class="bg-dark text-white pt-5 pb-4 mt-auto">
+    <footer id="footer" class="pt-5 pb-4 mt-auto @(ViewData["IsHomePage"] != null ? "luxury-footer" : "")">
         <div class="container text-center text-md-start">
             <div class="row">
                 <div class="col-md-4 col-lg-4 col-xl-3 mx-auto mb-4">
-                    <h5 class="text-uppercase fw-bold mb-4">
-                        <img src="~/images/logo.png" alt="PGKing Logo" height="80">
+                    <h5 class="text-uppercase fw-bold mb-4 @(ViewData["IsHomePage"] != null ? "luxury-footer-title" : "")">
+                        <img src="~/images/logo.png" alt="PGKing Logo" class="footer-logo">
                     </h5>
                     <p>
                         Providing premium living spaces from hostels, PGs to studio apartments. Your comfort is our priority.
                     </p>
+                    <div class="d-flex gap-3 mt-4 footer-social-links">
+                        <a href="https://wa.me/919628511173" target="_blank" class="footer-social-icon" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                        <a href="#" class="footer-social-icon" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="footer-social-icon" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="footer-social-icon" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
                 </div>
                 <div class="col-md-3 col-lg-2 col-xl-2 mx-auto mb-4">
-                    <h6 class="text-uppercase fw-bold mb-4">Links</h6>
-                    <p><a href="#!" class="text-white text-decoration-none">Home</a></p>
-                    <p><a href="#properties" class="text-white text-decoration-none">Properties</a></p>
-                    <p><a asp-controller="Home" asp-action="AboutUs" class="text-white text-decoration-none">About Us</a></p>
+                    <h6 class="text-uppercase fw-bold mb-4 @(ViewData["IsHomePage"] != null ? "luxury-footer-title" : "")">Links</h6>
+                    <p><a href="/" class="text-decoration-none">Home</a></p>
+                    <p><a href="/#properties" class="text-decoration-none">Properties</a></p>
+                    <p><a asp-controller="Home" asp-action="AboutUs" class="text-decoration-none">About Us</a></p>
+                    <p><a asp-controller="Admin" asp-action="Dashboard" class="text-decoration-none"><i class="fas fa-lock me-1"></i> Admin Login</a></p>
                 </div>
-                <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mb-md-0 mb-4">
-                    <h6 class="text-uppercase fw-bold mb-4">Contact</h6>
-                    <p><i class="fas fa-home me-3"></i> A- 129, First Floor, PG KING , BMC MARKET , 78 Business Park, Station Road , Bhandup West , Mumbai 400078</p>
-                    <p><i class="fas fa-envelope me-3"></i> info@pgking.in</p>
-                    <p><i class="fas fa-phone me-3"></i> +91 96285 11173</p>
+                <div class="col-md-5 col-lg-4 col-xl-4 mx-auto mb-md-0 mb-4">
+                    <h6 class="text-uppercase fw-bold mb-4 @(ViewData["IsHomePage"] != null ? "luxury-footer-title" : "")">Contact</h6>
+                    <p><i class="fas fa-home text-primary me-2"></i> A- 129, First Floor, PG KING , BMC MARKET , 78 Business Park, Station Road , Bhandup West , Mumbai 400078</p>
+                    <p><i class="fas fa-envelope text-primary me-2"></i> info@pgking.in</p>
+                    <p><i class="fas fa-phone text-primary me-2"></i> +91 96285 11173</p>
                 </div>
             </div>
         </div>
-        <div class="text-center p-3 mt-3 border-top border-secondary">
+        <div class="text-center p-3 mt-3 border-top border-secondary @(ViewData["IsHomePage"] != null ? "luxury-footer-bottom" : "")">
             &copy; 2026 Copyright: PGKing
         </div>
     </footer>
@@ -116,8 +149,10 @@
     <script>
         $(window).scroll(function() {
             if ($(this).scrollTop() > 50) {
+                $('.header-wrapper').addClass('scrolled');
                 $('.navbar').addClass('scrolled');
             } else {
+                $('.header-wrapper').removeClass('scrolled');
                 $('.navbar').removeClass('scrolled');
             }
         });

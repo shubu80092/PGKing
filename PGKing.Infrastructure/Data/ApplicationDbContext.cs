@@ -19,6 +19,8 @@ namespace PGKing.Infrastructure.Data
         public DbSet<Banner> Banners { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<PropertyMedia> PropertyMedias { get; set; }
+        public DbSet<TeamMember> TeamMembers { get; set; }
+        public DbSet<ContactInquiry> ContactInquiries { get; set; }
 
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<Tenant> Tenants { get; set; }
@@ -59,6 +61,42 @@ namespace PGKing.Infrastructure.Data
                 new City { Id = 4, Name = "Navi Mumbai", StateId = 1 },
                 new City { Id = 5, Name = "Bengaluru", StateId = 2 },
                 new City { Id = 6, Name = "New Delhi", StateId = 3 }
+            );
+
+            modelBuilder.Entity<TeamMember>().HasData(
+                new TeamMember
+                {
+                    Id = 1,
+                    Name = "Prahlad",
+                    Designation = "Founder & CEO",
+                    Bio = "Driving the vision to standardize premium, high-quality PG accommodations across India.",
+                    ImageUrl = "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600",
+                    Email = "info@pgking.in",
+                    DisplayOrder = 1,
+                    IsActive = true
+                },
+                new TeamMember
+                {
+                    Id = 2,
+                    Name = "Sneha Sharma",
+                    Designation = "Head of Operations",
+                    Bio = "Ensuring seamless property onboarding, regular quality maintenance, and tenant check-ins.",
+                    ImageUrl = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600",
+                    Email = "info@pgking.in",
+                    DisplayOrder = 2,
+                    IsActive = true
+                },
+                new TeamMember
+                {
+                    Id = 3,
+                    Name = "Rahul Verma",
+                    Designation = "Customer Relations",
+                    Bio = "Dedicated to handling student and professional booking support, inquiries, and reviews.",
+                    ImageUrl = "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600",
+                    Email = "info@pgking.in",
+                    DisplayOrder = 3,
+                    IsActive = true
+                }
             );
         }
     }

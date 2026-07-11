@@ -1,0 +1,72 @@
+@model PGKing.Application.Entities.TeamMember
+@{
+    ViewData["Title"] = "Add Team Member";
+    Layout = "_AdminLayout";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold"><i class="fas fa-plus-circle text-primary me-2"></i> Add Team Member</h5>
+                <p class="text-muted small">Register a new team member to be displayed on the corporate team page.</p>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="CreateTeamMember" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Name" class="form-label fw-semibold">Full Name</label>
+                            <input asp-for="Name" class="form-control rounded-3" placeholder="e.g. Rahul Verma" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Designation" class="form-label fw-semibold">Designation</label>
+                            <input asp-for="Designation" class="form-control rounded-3" placeholder="e.g. Head of Operations" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Upload Photo</label>
+                        <input type="file" name="imageFile" class="form-control rounded-3" accept="image/*" required />
+                        <span class="text-muted small">Upload a portrait image for the team profile.</span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Email" class="form-label fw-semibold">Email Address</label>
+                            <input asp-for="Email" type="email" class="form-control rounded-3" placeholder="e.g. name@pgking.in" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="LinkedInUrl" class="form-label fw-semibold">LinkedIn Profile URL</label>
+                            <input asp-for="LinkedInUrl" class="form-control rounded-3" placeholder="e.g. https://linkedin.com/in/username" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Bio" class="form-label fw-semibold">Biography</label>
+                        <textarea asp-for="Bio" class="form-control rounded-3" rows="3" placeholder="Write a short summary about the role and qualifications..."></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="DisplayOrder" class="form-label fw-semibold">Display Order</label>
+                            <input asp-for="DisplayOrder" type="number" class="form-control rounded-3" value="0" />
+                        </div>
+                        <div class="col-md-6 mb-4 d-flex align-items-end">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" asp-for="IsActive" checked>
+                                <label class="form-check-label fw-semibold" asp-for="IsActive">Show on Web Page</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="TeamMembers" class="btn btn-light rounded-pill px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">Save Member</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

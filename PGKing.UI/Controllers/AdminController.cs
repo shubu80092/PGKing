@@ -1025,6 +1025,144 @@ namespace PGKing.UI.Controllers
         }
         #endregion
 
+        #region TeamMembers
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> TeamMembers()
+        {
+            try
+            {
+                await _context.Database.MigrateAsync();
+            }
+            catch (Exception ex)
+            {
+                // Soft fail, logged on console
+            }
+            var members = await _context.TeamMembers.OrderBy(t => t.DisplayOrder).ToListAsync();
+            return View(members);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
+        public IActionResult CreateTeamMember()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> CreateTeamMember(TeamMember member, IFormFile? imageFile)
+        {
+            ModelState.Remove("ImageUrl");
+            if (ModelState.IsValid)
+            {
+                if (imageFile != null)
+                {
+                    member.ImageUrl = await _storageService.SaveFileAsync(imageFile, "team");
+                }
+                _context.TeamMembers.Add(member);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(TeamMembers));
+            }
+            return View(member);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> EditTeamMember(int id)
+        {
+            var member = await _context.TeamMembers.FindAsync(id);
+            if (member == null) return NotFound();
+            return View(member);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> EditTeamMember(TeamMember member, IFormFile? imageFile)
+        {
+            ModelState.Remove("ImageUrl");
+            if (ModelState.IsValid)
+            {
+                if (imageFile != null)
+                {
+                    if (!string.IsNullOrEmpty(member.ImageUrl))
+                    {
+                        try
+                        {
+                            await _storageService.DeleteFileAsync(member.ImageUrl);
+                        }
+                        catch
+                        {
+                            // Soft fail for S3 deletion
+                        }
+                    }
+                    member.ImageUrl = await _storageService.SaveFileAsync(imageFile, "team");
+                }
+                _context.TeamMembers.Update(member);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(TeamMembers));
+            }
+            return View(member);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> DeleteTeamMember(int id)
+        {
+            var member = await _context.TeamMembers.FindAsync(id);
+            if (member != null)
+            {
+                _context.TeamMembers.Remove(member);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(TeamMembers));
+        }
+        #endregion
+
+        #region ContactInquiries
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> ContactInquiries()
+        {
+            try
+            {
+                await _context.Database.MigrateAsync();
+            }
+            catch (Exception ex)
+            {
+                // Soft fail, logged on console
+            }
+            var inquiries = await _context.ContactInquiries.OrderByDescending(c => c.CreatedAt).ToListAsync();
+            return View(inquiries);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> MarkInquiryAsRead(int id)
+        {
+            var inquiry = await _context.ContactInquiries.FindAsync(id);
+            if (inquiry != null)
+            {
+                inquiry.IsRead = true;
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(ContactInquiries));
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> DeleteInquiry(int id)
+        {
+            var inquiry = await _context.ContactInquiries.FindAsync(id);
+            if (inquiry != null)
+            {
+                _context.ContactInquiries.Remove(inquiry);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(ContactInquiries));
+        }
+        #endregion
+
         #region Helpers
         [HttpGet]
         public async Task<JsonResult> GetCitiesByState(int stateId)

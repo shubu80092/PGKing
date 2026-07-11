@@ -31,6 +31,10 @@ namespace PGKing.Application.Entities
         
         public string Amenities { get; set; } = string.Empty;
 
+        public double? Latitude { get; set; }
+        
+        public double? Longitude { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         // Vendor ownership (nullable for SuperAdmin/system properties)
