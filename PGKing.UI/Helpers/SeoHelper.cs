@@ -98,7 +98,7 @@ namespace PGKing.UI.Helpers
                 sb.AppendLine("  </url>");
 
                 sb.AppendLine("  <url>");
-                sb.AppendLine("       <loc>https://pgking.in/Home/Properties</loc>");
+                sb.AppendLine("       <loc>https://pgking.in/paying-guests</loc>");
                 sb.AppendLine($"       <lastmod>{DateTime.UtcNow:yyyy-MM-ddTHH:mm:ss+00:00}</lastmod>");
                 sb.AppendLine("       <changefreq>daily</changefreq>");
                 sb.AppendLine("       <priority>0.8000</priority>");
