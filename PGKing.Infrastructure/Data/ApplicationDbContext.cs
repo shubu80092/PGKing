@@ -20,12 +20,14 @@ namespace PGKing.Infrastructure.Data
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<PropertyMedia> PropertyMedias { get; set; }
         public DbSet<TeamMember> TeamMembers { get; set; }
+        public DbSet<Testimonial> Testimonials { get; set; }
         public DbSet<ContactInquiry> ContactInquiries { get; set; }
 
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<Tenant> Tenants { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<SuperAdmin> SuperAdmins { get; set; }
+        public DbSet<GalleryItem> GalleryItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -35,6 +37,7 @@ namespace PGKing.Infrastructure.Data
             modelBuilder.Entity<Vendor>().HasIndex(v => v.Email).IsUnique();
             modelBuilder.Entity<Tenant>().HasIndex(t => t.Email).IsUnique();
             modelBuilder.Entity<SuperAdmin>().HasIndex(s => s.Username).IsUnique();
+            modelBuilder.Entity<Property>().HasIndex(p => new { p.LocationSlug, p.PropertySlug });
             
             // Seed Data
             modelBuilder.Entity<SuperAdmin>().HasData(
@@ -71,7 +74,7 @@ namespace PGKing.Infrastructure.Data
                     Designation = "Founder & CEO",
                     Bio = "Driving the vision to standardize premium, high-quality PG accommodations across India.",
                     ImageUrl = "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600",
-                    Email = "info@pgking.in",
+                    Email = "pgkingmumbai@pgking.in",
                     DisplayOrder = 1,
                     IsActive = true
                 },
@@ -82,7 +85,7 @@ namespace PGKing.Infrastructure.Data
                     Designation = "Head of Operations",
                     Bio = "Ensuring seamless property onboarding, regular quality maintenance, and tenant check-ins.",
                     ImageUrl = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600",
-                    Email = "info@pgking.in",
+                    Email = "pgkingmumbai@pgking.in",
                     DisplayOrder = 2,
                     IsActive = true
                 },
@@ -93,7 +96,7 @@ namespace PGKing.Infrastructure.Data
                     Designation = "Customer Relations",
                     Bio = "Dedicated to handling student and professional booking support, inquiries, and reviews.",
                     ImageUrl = "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600",
-                    Email = "info@pgking.in",
+                    Email = "pgkingmumbai@pgking.in",
                     DisplayOrder = 3,
                     IsActive = true
                 }

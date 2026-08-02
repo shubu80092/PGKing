@@ -298,11 +298,19 @@ namespace PGKing.Infrastructure.Migrations
                     b.Property<string>("ImageUrl")
                         .HasColumnType("longtext");
 
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<double?>("Latitude")
                         .HasColumnType("double");
 
                     b.Property<double?>("Longitude")
                         .HasColumnType("double");
+
+                    b.Property<string>("PgType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<int>("StateId")
                         .HasColumnType("int");

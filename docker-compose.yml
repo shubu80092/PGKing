@@ -7,6 +7,7 @@ services:
       - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
       - ConnectionStrings__DefaultConnection=Server=PGKing-mysql;Port=3306;Database=pgkingDb;User=pgkinguser;Password=pgkingpassword;AllowPublicKeyRetrieval=True;SslMode=None;
       - "ConnectionStrings:DefaultConnection=Server=PGKing-mysql;Port=3306;Database=pgkingDb;User=pgkinguser;Password=pgkingpassword;AllowPublicKeyRetrieval=True;SslMode=None;"
       - ASPNETCORE_URLS=http://+:8080

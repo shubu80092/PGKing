@@ -4,6 +4,22 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - PGKing</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="~/images/logo.png" asp-append-version="true" />
+    <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico" asp-append-version="true" />
+    <link rel="apple-touch-icon" href="~/images/logo.png" asp-append-version="true" />
+    @if (ViewData["MetaDescription"] != null)
+    {
+        <meta name="description" content="@ViewData["MetaDescription"]" />
+    }
+    @if (ViewData["MetaKeywords"] != null)
+    {
+        <meta name="keywords" content="@ViewData["MetaKeywords"]" />
+    }
+    @if (ViewData["CanonicalUrl"] != null)
+    {
+        <link rel="canonical" href="@ViewData["CanonicalUrl"]" />
+    }
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
@@ -12,10 +28,26 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/PGKing.UI.styles.css" asp-append-version="true" />
-    @if (ViewData["IsHomePage"] != null)
-    {
-        <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
-    }
+    <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
+
+    <!-- Microsoft Clarity -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "xvfdz2iw1u");
+    </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PWXP601E98"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-PWXP601E98');
+    </script>
 </head>
 <body class="@(ViewData["IsHomePage"] != null ? "home-page-body" : "")">
     <header class="fixed-top header-wrapper">
@@ -24,7 +56,7 @@
             <div class="container d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-4">
                     <span class="text-white-50"><i class="fas fa-phone-alt me-2 text-primary"></i> +91 96285 11173</span>
-                    <span class="text-white-50"><i class="fas fa-envelope me-2 text-primary"></i> info@pgking.in</span>
+                    <span class="text-white-50"><i class="fas fa-envelope me-2 text-primary"></i> pgkingmumbai@pgking.in</span>
                 </div>
                 <div class="d-flex align-items-center gap-3">
                     <a href="https://wa.me/919628511173" target="_blank" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
@@ -51,6 +83,9 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link fw-semibold px-3" asp-controller="Home" asp-action="Properties">Properties</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fw-semibold px-3" asp-controller="Home" asp-action="Gallery">Gallery</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link fw-semibold px-3" asp-controller="Home" asp-action="Services">Services</a>
@@ -133,7 +168,7 @@
                 <div class="col-md-5 col-lg-4 col-xl-4 mx-auto mb-md-0 mb-4">
                     <h6 class="text-uppercase fw-bold mb-4 @(ViewData["IsHomePage"] != null ? "luxury-footer-title" : "")">Contact</h6>
                     <p><i class="fas fa-home text-primary me-2"></i> A- 129, First Floor, PG KING , BMC MARKET , 78 Business Park, Station Road , Bhandup West , Mumbai 400078</p>
-                    <p><i class="fas fa-envelope text-primary me-2"></i> info@pgking.in</p>
+                    <p><i class="fas fa-envelope text-primary me-2"></i> pgkingmumbai@pgking.in</p>
                     <p><i class="fas fa-phone text-primary me-2"></i> +91 96285 11173</p>
                 </div>
             </div>

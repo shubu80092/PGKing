@@ -27,7 +27,12 @@ namespace PGKing.Infrastructure.Repositories
 
         public async Task<IEnumerable<Tenant>> GetByVendorIdAsync(int vendorId)
         {
-            return await _context.Tenants.Where(t => t.VendorId == vendorId).ToListAsync();
+            return await _context.Tenants.Include(t => t.Vendor).Where(t => t.VendorId == vendorId).ToListAsync();
+        }
+
+        public new async Task<IEnumerable<Tenant>> GetAllAsync()
+        {
+            return await _context.Tenants.Include(t => t.Vendor).ToListAsync();
         }
     }
 }

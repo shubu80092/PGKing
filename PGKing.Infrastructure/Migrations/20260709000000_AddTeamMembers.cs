@@ -30,9 +30,9 @@ CREATE TABLE IF NOT EXISTS `TeamMembers` (
 
             migrationBuilder.Sql(@"
 INSERT INTO `TeamMembers` (`Id`, `Name`, `Designation`, `Bio`, `ImageUrl`, `Email`, `DisplayOrder`, `IsActive`) VALUES
-(1, 'Prahlad', 'Founder & CEO', 'Driving the vision to standardize premium, high-quality PG accommodations across India.', 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600', 'info@pgking.in', 1, 1),
-(2, 'Sneha Sharma', 'Head of Operations', 'Ensuring seamless property onboarding, regular quality maintenance, and tenant check-ins.', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600', 'info@pgking.in', 2, 1),
-(3, 'Rahul Verma', 'Customer Relations', 'Dedicated to handling student and professional booking support, inquiries, and reviews.', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600', 'info@pgking.in', 3, 1)
+(1, 'Prahlad', 'Founder & CEO', 'Driving the vision to standardize premium, high-quality PG accommodations across India.', 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600', 'pgkingmumbai@pgking.in', 1, 1),
+(2, 'Sneha Sharma', 'Head of Operations', 'Ensuring seamless property onboarding, regular quality maintenance, and tenant check-ins.', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600', 'pgkingmumbai@pgking.in', 2, 1),
+(3, 'Rahul Verma', 'Customer Relations', 'Dedicated to handling student and professional booking support, inquiries, and reviews.', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600', 'pgkingmumbai@pgking.in', 3, 1)
 ON DUPLICATE KEY UPDATE `Name`=VALUES(`Name`);
 ");
         }

@@ -1,0 +1,108 @@
+@model IEnumerable<PGKing.Application.Entities.GalleryItem>
+@{
+    ViewData["Title"] = "Manage Gallery & Media";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Gallery & Video Tours</h2>
+            <p class="text-muted mb-0">Manage website showcase photos, video tours, and community moments.</p>
+        </div>
+        <a asp-action="CreateGallery" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: var(--luxury-burgundy); border-color: var(--luxury-burgundy);">
+            <i class="fas fa-plus me-2"></i> Add Photo / Video
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="px-4 py-3">Preview</th>
+                            <th class="py-3">Title & Category</th>
+                            <th class="py-3">Media Type</th>
+                            <th class="py-3">Status</th>
+                            <th class="py-3">Order</th>
+                            <th class="text-end px-4 py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var item in Model)
+                            {
+                                var previewImg = item.MediaType == "Video" 
+                                                 ? (!string.IsNullOrEmpty(item.ThumbnailUrl) ? item.ThumbnailUrl : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400") 
+                                                 : item.MediaUrl;
+                                <tr>
+                                    <td class="px-4 py-3">
+                                        <div class="position-relative d-inline-block rounded-3 overflow-hidden shadow-sm" style="width: 80px; height: 60px;">
+                                            <img src="@previewImg" alt="@item.Title" class="w-100 h-100 object-fit-cover" />
+                                            @if (item.MediaType == "Video")
+                                            {
+                                                <div class="position-absolute top-50 start-50 translate-middle bg-dark bg-opacity-75 text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                                                    <i class="fas fa-play" style="font-size: 0.6rem;"></i>
+                                                </div>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td class="py-3">
+                                        <div class="fw-bold text-dark">@item.Title</div>
+                                        <span class="badge bg-light text-dark border mt-1">@item.Category</span>
+                                        @if (!string.IsNullOrEmpty(item.Description))
+                                        {
+                                            <div class="text-muted small text-truncate" style="max-width: 280px;">@item.Description</div>
+                                        }
+                                    </td>
+                                    <td class="py-3">
+                                        @if (item.MediaType == "Video")
+                                        {
+                                            <span class="badge bg-danger rounded-pill px-3 py-2"><i class="fas fa-video me-1"></i> Video</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-primary rounded-pill px-3 py-2"><i class="fas fa-camera me-1"></i> Photo</span>
+                                        }
+                                    </td>
+                                    <td class="py-3">
+                                        @if (item.IsActive)
+                                        {
+                                            <span class="badge bg-success rounded-pill px-3 py-2"><i class="fas fa-check-circle me-1"></i> Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary rounded-pill px-3 py-2">Hidden</span>
+                                        }
+                                    </td>
+                                    <td class="py-3 fw-bold text-muted">#@item.DisplayOrder</td>
+                                    <td class="text-end px-4 py-3">
+                                        <a asp-action="EditGallery" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary rounded-pill me-1" title="Edit">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <form asp-action="DeleteGallery" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this media item?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Delete">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="fas fa-photo-video fa-3x mb-3 d-block text-secondary"></i>
+                                    No gallery photos or videos found. Click "Add Photo / Video" above to create one.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

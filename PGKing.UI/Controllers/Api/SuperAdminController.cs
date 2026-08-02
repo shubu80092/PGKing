@@ -11,7 +11,7 @@ namespace PGKing.UI.Controllers.Api
 {
     [ApiController]
     [Route("api/superadmin/vendors")]
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(AuthenticationSchemes = "Bearer", Roles = "SuperAdmin")]
     public class SuperAdminController : ControllerBase
     {
         private readonly IVendorRepository _vendorRepository;

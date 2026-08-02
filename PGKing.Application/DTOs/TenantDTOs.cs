@@ -44,6 +44,7 @@ namespace PGKing.Application.DTOs
     {
         public int TenantId { get; set; }
         public int VendorId { get; set; }
+        public string VendorName { get; set; } = string.Empty;
         public string CompanyName { get; set; } = string.Empty;
         public string ContactPerson { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;

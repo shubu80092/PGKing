@@ -2,7 +2,7 @@
 
 # Configuration - Customize these values if needed
 # Note: Based on run.ps1, the target image path was formatted this way:
-IMAGE_NAME="ghcr.io/shubu80092/pgking/shubu80092/pgking:latest"
+IMAGE_NAME="ghcr.io/shubu80092/pgking:latest"
 CONTAINER_NAME="pgking-app"
 HOST_PORT=8000
 CONTAINER_PORT=80

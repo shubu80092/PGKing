@@ -73,6 +73,26 @@ builder.Services.AddAuthentication(options => {
         ValidateAudience = false,
         ClockSkew = TimeSpan.Zero
     };
+    
+    // Return standard JSON for 401 and 403 instead of empty body
+    options.Events = new JwtBearerEvents
+    {
+        OnChallenge = async context =>
+        {
+            context.HandleResponse(); // Suppress default empty response
+            context.Response.StatusCode = 401;
+            context.Response.ContentType = "application/json";
+            var result = System.Text.Json.JsonSerializer.Serialize(PGKing.Application.DTOs.ApiResponse<object>.Fail("Unauthorized: Invalid or missing Bearer token."), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+            await context.Response.WriteAsync(result);
+        },
+        OnForbidden = async context =>
+        {
+            context.Response.StatusCode = 403;
+            context.Response.ContentType = "application/json";
+            var result = System.Text.Json.JsonSerializer.Serialize(PGKing.Application.DTOs.ApiResponse<object>.Fail("Forbidden: You do not have permission to access this resource."), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+            await context.Response.WriteAsync(result);
+        }
+    };
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -111,6 +131,41 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// Failsafe copy of logo to favicon.ico if logo.png exists
+try
+{
+    var webRootPath = app.Environment.WebRootPath;
+    if (!string.IsNullOrEmpty(webRootPath))
+    {
+        var logoPath = Path.Combine(webRootPath, "images", "logo.png");
+        var faviconPath = Path.Combine(webRootPath, "favicon.ico");
+        if (File.Exists(logoPath))
+        {
+            File.Copy(logoPath, faviconPath, true);
+        }
+    }
+}
+catch { }
+
+// Ensure invariant/en-US culture for number formatting (Latitude/Longitude floating point parsing)
+// Fallback to InvariantCulture if running in Globalization Invariant Mode (DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=true)
+System.Globalization.CultureInfo defaultCulture;
+try
+{
+    defaultCulture = new System.Globalization.CultureInfo("en-US");
+}
+catch (System.Globalization.CultureNotFoundException)
+{
+    defaultCulture = System.Globalization.CultureInfo.InvariantCulture;
+}
+
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(defaultCulture),
+    SupportedCultures = new List<System.Globalization.CultureInfo> { defaultCulture },
+    SupportedUICultures = new List<System.Globalization.CultureInfo> { defaultCulture }
+});
+
 app.UseForwardedHeaders();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -126,7 +181,65 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.Migrate();
+        try { context.Database.Migrate(); } catch { }
+
+        try
+        {
+            context.Database.ExecuteSqlRaw(@"
+DROP PROCEDURE IF EXISTS AddColumnIfNotExists;
+CREATE PROCEDURE AddColumnIfNotExists(
+    IN tableName VARCHAR(255),
+    IN columnName VARCHAR(255),
+    IN columnDefinition TEXT
+)
+BEGIN
+    DECLARE colExists INT DEFAULT 0;
+    SELECT COUNT(*) INTO colExists
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = tableName
+      AND COLUMN_NAME = columnName;
+    
+    IF colExists = 0 THEN
+        SET @sqlstmt = CONCAT('ALTER TABLE `', tableName, '` ADD COLUMN `', columnName, '` ', columnDefinition);
+        PREPARE stmt FROM @sqlstmt;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END;
+");
+            context.Database.ExecuteSqlRaw("CALL AddColumnIfNotExists('Properties', 'Area', 'VARCHAR(100) NULL');");
+            context.Database.ExecuteSqlRaw("CALL AddColumnIfNotExists('Properties', 'CityName', 'VARCHAR(100) NULL');");
+            context.Database.ExecuteSqlRaw("CALL AddColumnIfNotExists('Properties', 'StateName', 'VARCHAR(100) NULL');");
+            context.Database.ExecuteSqlRaw("CALL AddColumnIfNotExists('Properties', 'PropertySlug', 'VARCHAR(200) NULL');");
+            context.Database.ExecuteSqlRaw("CALL AddColumnIfNotExists('Properties', 'LocationSlug', 'VARCHAR(200) NULL');");
+            context.Database.ExecuteSqlRaw("CALL AddColumnIfNotExists('Properties', 'CanonicalUrl', 'VARCHAR(500) NULL');");
+
+            context.Database.ExecuteSqlRaw(@"
+UPDATE `Properties` SET `Area` = 'Bhandup West' WHERE `Id` = 1 AND (`Area` IS NULL OR `Area` = '');
+UPDATE `Properties` SET `Area` = 'Powai' WHERE `Id` = 2 AND (`Area` IS NULL OR `Area` = '');
+UPDATE `Properties` SET `Area` = 'Andheri East' WHERE `Id` = 3 AND (`Area` IS NULL OR `Area` = '');
+UPDATE `Properties` SET `Area` = 'Bhandup West' WHERE (`Area` IS NULL OR `Area` = '');
+
+UPDATE `Properties` SET `CityName` = 'Mumbai' WHERE (`CityName` IS NULL OR `CityName` = '');
+UPDATE `Properties` SET `StateName` = 'Maharashtra' WHERE (`StateName` IS NULL OR `StateName` = '');
+
+UPDATE `Properties`
+SET 
+    `LocationSlug` = CONCAT('pg-in-', LOWER(REPLACE(REPLACE(TRIM(`Area`), ' ', '-'), '--', '-')), '-', LOWER(REPLACE(REPLACE(TRIM(`CityName`), ' ', '-'), '--', '-'))),
+    `PropertySlug` = LOWER(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(`Title`), ' ', '-'), '.', ''), ',', ''), '--', '-'))
+WHERE `PropertySlug` IS NULL OR `PropertySlug` = '';
+
+UPDATE `Properties`
+SET `CanonicalUrl` = CONCAT('https://pgking.in/', `LocationSlug`, '/', `PropertySlug`)
+WHERE `CanonicalUrl` IS NULL OR `CanonicalUrl` = '';
+");
+        }
+        catch (Exception sqlEx)
+        {
+            var log = services.GetRequiredService<ILogger<Program>>();
+            log.LogWarning(sqlEx, "Failsafe schema verification note.");
+        }
     }
     catch (Exception ex)
     {
@@ -155,6 +268,27 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+
+// Existing (old) property details route for HTTP 301 Permanent Redirect
+app.MapControllerRoute(
+    name: "propertyDetailsOld",
+    pattern: "paying-guests/{slug}",
+    defaults: new { controller = "Home", action = "PropertyDetailsOld" })
+    .WithStaticAssets();
+
+// SEO Location Listing page route: e.g. /pg-in-bhandup-west-mumbai
+app.MapControllerRoute(
+    name: "locationPropertiesSeo",
+    pattern: "pg-in-{locationSlug}",
+    defaults: new { controller = "Home", action = "LocationPropertiesSeo" })
+    .WithStaticAssets();
+
+// New SEO Property Details route: e.g. /pg-in-bhandup-west-mumbai/pg-janteswar-society
+app.MapControllerRoute(
+    name: "propertyDetailsSeo",
+    pattern: "{locationSlug:regex(^pg-in-.*)}/{propertySlug}",
+    defaults: new { controller = "Home", action = "PropertyDetailsSeo" })
+    .WithStaticAssets();
 
 app.MapControllerRoute(
     name: "default",

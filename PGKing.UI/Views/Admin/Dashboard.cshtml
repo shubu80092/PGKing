@@ -58,6 +58,18 @@
 </div>
 
 <div class="row">
+    <!-- Booking Trends Chart -->
+    <div class="col-12 mb-4">
+        <div class="card border-0 shadow-sm rounded-4 animate-fade-in">
+            <div class="card-header bg-white border-0 p-4 pb-0">
+                <h5 class="fw-bold mb-0">Booking Trends (Last 7 Days)</h5>
+            </div>
+            <div class="card-body p-4" style="height: 300px;">
+                <canvas id="bookingTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
     <!-- Recent Activity -->
     <div class="col-xl-8 mb-4">
         <div class="card border-0 shadow-sm rounded-4 h-100 animate-fade-in">
@@ -136,16 +148,11 @@
                 <h5 class="fw-bold mb-0">Occupancy Meter</h5>
             </div>
             <div class="card-body d-flex flex-column align-items-center p-4">
-                <div class="position-relative d-inline-block mb-4">
-                    <svg width="200" height="200" viewBox="0 0 160 160">
-                        <circle cx="80" cy="80" r="70" fill="none" stroke="#F1F5F9" stroke-width="14" />
-                        <circle cx="80" cy="80" r="70" fill="none" stroke="#0052FF" stroke-width="14" 
-                                stroke-dasharray="440" stroke-dashoffset="@(440 - (440 * occupancyRate / 100))" 
-                                stroke-linecap="round" transform="rotate(-90 80 80)" style="transition: stroke-dashoffset 1.5s ease-in-out;" />
-                    </svg>
-                    <div class="position-absolute top-50 start-50 translate-middle text-center">
-                        <h1 class="fw-bold mb-0 text-dark">@occupancyRate%</h1>
-                        <p class="text-muted fw-bold small mb-0">OCCUPIED</p>
+                <div class="position-relative d-inline-block mb-4" style="width: 200px; height: 200px;">
+                    <canvas id="occupancyDoughnut"></canvas>
+                    <div class="position-absolute top-50 start-50 translate-middle text-center" style="pointer-events: none;">
+                        <h2 class="fw-bold mb-0 text-dark" style="font-size: 2rem;">@occupancyRate%</h2>
+                        <p class="text-muted fw-bold mb-0" style="font-size: 0.7rem; letter-spacing: 1px;">OCCUPIED</p>
                     </div>
                 </div>
                 
@@ -180,7 +187,12 @@
 @if (propertyBedStats != null && propertyBedStats.Any())
 {
     <div class="card border-0 shadow-sm rounded-4 mb-4 animate-fade-in" style="animation-delay: 0.3s">
-        <div class="card-header bg-white border-0 p-4">
+        <div class="card-body p-4 border-bottom">
+            <div style="height: 250px;">
+                <canvas id="propertyBarChart"></canvas>
+            </div>
+        </div>
+        <div class="card-header bg-white border-0 p-4 pt-3">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h5 class="fw-bold mb-1"><i class="fas fa-building-user text-primary me-2"></i>Bed Availability by Property</h5>
@@ -263,3 +275,110 @@
     }
     .animate-fade-in { animation: fadeInUp 0.6s ease forwards; opacity: 0; }
 </style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Shared Chart.js Defaults
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#8E8A84';
+            
+            // 1. Booking Trends Line Chart
+            const trendCtx = document.getElementById('bookingTrendChart');
+            if (trendCtx) {
+                new Chart(trendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: @Html.Raw(ViewBag.TrendLabelsJson ?? "[]"),
+                        datasets: [{
+                            label: 'New Bookings',
+                            data: @Html.Raw(ViewBag.TrendDataJson ?? "[]"),
+                            borderColor: '#0052FF',
+                            backgroundColor: 'rgba(0, 82, 255, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: '#0052FF',
+                            pointBorderWidth: 2,
+                            pointRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { borderDash: [5, 5], color: '#f1f5f9' }, ticks: { stepSize: 1 } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // 2. Occupancy Doughnut Chart
+            const occCtx = document.getElementById('occupancyDoughnut');
+            if (occCtx) {
+                new Chart(occCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Occupied', 'Available'],
+                        datasets: [{
+                            data: [@occupiedBeds, @availableBeds],
+                            backgroundColor: ['#0052FF', '#F1F5F9'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        plugins: { legend: { display: false }, tooltip: { enabled: true } }
+                    }
+                });
+            }
+
+            // 3. Property Occupancy Bar Chart
+            const barCtx = document.getElementById('propertyBarChart');
+            if (barCtx) {
+                new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: @Html.Raw(ViewBag.PropertyLabelsJson ?? "[]"),
+                        datasets: [
+                            {
+                                label: 'Occupied Beds',
+                                data: @Html.Raw(ViewBag.PropertyOccupiedBedsJson ?? "[]"),
+                                backgroundColor: '#0052FF',
+                                borderRadius: 4,
+                                categoryPercentage: 0.6,
+                                barPercentage: 0.8
+                            },
+                            {
+                                label: 'Total Beds',
+                                data: @Html.Raw(ViewBag.PropertyTotalBedsJson ?? "[]"),
+                                backgroundColor: '#E2E8F0',
+                                borderRadius: 4,
+                                categoryPercentage: 0.6,
+                                barPercentage: 0.8
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 8 } }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, grid: { borderDash: [5, 5], color: '#f1f5f9' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}

@@ -4,6 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Admin Dashboard</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="~/images/logo.png" asp-append-version="true" />
+    <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico" asp-append-version="true" />
+    <link rel="apple-touch-icon" href="~/images/logo.png" asp-append-version="true" />
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
@@ -49,6 +53,12 @@
         .dashboard-stat-value { font-size: 1.75rem; font-weight: 850; margin: 0; color: #1E293B; }
         
         .bg-primary-soft { background: rgba(0, 82, 255, 0.05); }
+
+        /* Custom Scrollbar for Sidebar */
+        .custom-sidebar-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        .custom-sidebar-scroll:hover::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); }
     </style>
 </head>
 <body>

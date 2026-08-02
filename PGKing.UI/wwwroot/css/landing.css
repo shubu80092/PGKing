@@ -779,13 +779,13 @@
     font-size: 0.65rem;
     color: #333;
     z-index: 5;
-    opacity: 0;
+    opacity: 0.75;
     transition: opacity 0.3s, background 0.3s;
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
 }
 
 .explorer-list-card:hover .img-slider-arrow {
-    opacity: 0.9;
+    opacity: 1;
 }
 
 .img-slider-arrow:hover {
@@ -982,4 +982,32 @@
     .map-wrapper {
         position: static !important;
     }
+}
+
+/* Hide scrollbar for slider containers */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.hide-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+/* Verified Badge styling */
+.verified-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a73e8;
+    font-weight: 700;
+    font-size: 0.72rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 50px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border: 1.5px solid #1a73e8;
+    backdrop-filter: blur(4px);
+    letter-spacing: 0.5px;
+}
+.verified-badge i {
+    color: #1a73e8;
 }

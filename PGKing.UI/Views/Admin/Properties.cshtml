@@ -46,8 +46,16 @@
                                             }
                                         </div>
                                         <div>
-                                            <div class="fw-bold text-dark">@item.Title</div>
-                                            <div class="text-muted small">ID: #PG-@item.Id</div>
+                                            <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                                @item.Title
+                                                @if(item.IsVerified)
+                                                {
+                                                    <span class="badge bg-light text-primary border px-2 py-0" style="font-size: 0.65rem;"><i class="fas fa-check-circle me-1"></i>Verified</span>
+                                                }
+                                            </div>
+                                            <div class="text-muted small">
+                                                ID: #PG-@item.Id <span class="badge bg-light text-secondary ms-1">@item.PgType</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>

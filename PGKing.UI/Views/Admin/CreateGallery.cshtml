@@ -1,0 +1,132 @@
+@model PGKing.Application.Entities.GalleryItem
+@{
+    ViewData["Title"] = "Add Gallery Photo / Video";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid p-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold mb-1">Add Gallery Photo / Video</h2>
+                    <p class="text-muted mb-0">Add a new media item to the website showcase gallery.</p>
+                </div>
+                <a asp-action="Gallery" class="btn btn-light rounded-pill px-4 shadow-sm border">
+                    <i class="fas fa-arrow-left me-2"></i> Back to Gallery
+                </a>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 p-lg-5">
+                    <form asp-action="CreateGallery" method="post" enctype="multipart/form-data">
+                        <div class="row g-4">
+                            <!-- Title -->
+                            <div class="col-md-6">
+                                <label asp-for="Title" class="form-label fw-bold">Title <span class="text-danger">*</span></label>
+                                <input asp-for="Title" class="form-control form-control-lg bg-light border-0" required placeholder="e.g. Luxury Premium Living Lounge">
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Media Type -->
+                            <div class="col-md-3">
+                                <label asp-for="MediaType" class="form-label fw-bold">Media Type <span class="text-danger">*</span></label>
+                                <select asp-for="MediaType" class="form-select form-select-lg bg-light border-0" id="mediaTypeSelect">
+                                    <option value="Photo">Photo</option>
+                                    <option value="Video">Video</option>
+                                </select>
+                            </div>
+
+                            <!-- Category -->
+                            <div class="col-md-3">
+                                <label asp-for="Category" class="form-label fw-bold">Category <span class="text-danger">*</span></label>
+                                <select asp-for="Category" class="form-select form-select-lg bg-light border-0">
+                                    <option value="Rooms">Rooms</option>
+                                    <option value="Community">Community</option>
+                                    <option value="Events">Events</option>
+                                    <option value="Dining">Dining</option>
+                                    <option value="Amenities">Amenities</option>
+                                    <option value="Exterior">Exterior</option>
+                                </select>
+                            </div>
+
+                            <!-- Media Upload File -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Upload Media File <span class="text-muted fw-normal">(Optional if URL is provided)</span></label>
+                                <input type="file" name="mediaFile" class="form-control form-control-lg bg-light border-0" accept="image/*,video/mp4,video/webm">
+                                <div class="form-text small">Supports JPG, PNG, WEBP images or MP4 videos.</div>
+                            </div>
+
+                            <!-- Or Media URL -->
+                            <div class="col-md-6">
+                                <label asp-for="MediaUrl" class="form-label fw-bold">Or Media / YouTube URL <span class="text-muted fw-normal">(If not uploading)</span></label>
+                                <input asp-for="MediaUrl" class="form-control form-control-lg bg-light border-0" placeholder="https://... or YouTube embed URL">
+                                <span asp-validation-for="MediaUrl" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Thumbnail (for Videos) -->
+                            <div class="col-12 video-thumbnail-section" style="display: none;">
+                                <div class="p-3 bg-light rounded-3 row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Upload Video Thumbnail Image</label>
+                                        <input type="file" name="thumbnailFile" class="form-control bg-white border-0" accept="image/*">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="ThumbnailUrl" class="form-label fw-bold">Or Video Thumbnail URL</label>
+                                        <input asp-for="ThumbnailUrl" class="form-control bg-white border-0" placeholder="https://...">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="col-12">
+                                <label asp-for="Description" class="form-label fw-bold">Description <span class="text-muted fw-normal">(Optional)</span></label>
+                                <textarea asp-for="Description" class="form-control bg-light border-0" rows="3" placeholder="Brief details about this photo or video tour..."></textarea>
+                            </div>
+
+                            <!-- Display Order -->
+                            <div class="col-md-6">
+                                <label asp-for="DisplayOrder" class="form-label fw-bold">Display Order</label>
+                                <input asp-for="DisplayOrder" type="number" class="form-control form-control-lg bg-light border-0">
+                                <div class="form-text small">Lower numbers appear first on the website gallery.</div>
+                            </div>
+
+                            <!-- IsActive Switch -->
+                            <div class="col-md-6 d-flex align-items-center pt-3">
+                                <div class="form-check form-switch fs-5">
+                                    <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch" checked id="isActiveSwitch">
+                                    <label class="form-check-label fw-bold ms-2" for="isActiveSwitch">
+                                        Active on Website
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-12 pt-3">
+                                <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm" style="background: var(--luxury-burgundy); border-color: var(--luxury-burgundy);">
+                                    <i class="fas fa-save me-2"></i> Save to Gallery
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function() {
+            function toggleThumbnailSection() {
+                if ($('#mediaTypeSelect').val() === 'Video') {
+                    $('.video-thumbnail-section').slideDown();
+                } else {
+                    $('.video-thumbnail-section').slideUp();
+                }
+            }
+            $('#mediaTypeSelect').on('change', toggleThumbnailSection);
+            toggleThumbnailSection();
+        });
+    </script>
+}

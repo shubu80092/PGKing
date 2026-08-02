@@ -1,0 +1,189 @@
+@model IEnumerable<PGKing.Application.Entities.GalleryItem>
+@{
+    ViewData["Title"] = "Gallery & Video Tours | PGKing";
+    var currentCategory = ViewBag.CurrentCategory as string ?? "All";
+    var categories = ViewBag.Categories as string[] ?? new[] { "All", "Photos", "Videos", "Rooms", "Community", "Events", "Dining", "Amenities" };
+}
+
+<!-- Page Header -->
+<section class="luxury-hero-section position-relative overflow-hidden py-5" style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);">
+    <div class="container py-5 text-center position-relative z-1">
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold text-uppercase mb-3 shadow-sm">
+            <i class="fas fa-camera-retro me-1"></i> Visual Showcase
+        </span>
+        <h1 class="display-4 fw-bold text-white mb-3 font-serif">Our Living Gallery & Video Tours</h1>
+        <p class="lead text-gray-300 mx-auto" style="max-width: 700px;">
+            Explore our premium co-living lounges, designer private suites, community gatherings, and interactive video walkthroughs.
+        </p>
+    </div>
+</section>
+
+<!-- Filter Navigation -->
+<section class="py-4 bg-white border-bottom sticky-top shadow-sm" style="top: 70px; z-index: 999;">
+    <div class="container">
+        <div class="d-flex flex-wrap align-items-center justify-content-center gap-2">
+            @foreach (var cat in categories)
+            {
+                var isActive = string.Equals(cat, currentCategory, StringComparison.OrdinalIgnoreCase);
+                <a asp-action="Gallery" asp-route-category="@cat" 
+                   class="btn rounded-pill px-4 py-2 fw-semibold transition-all @(isActive ? "btn-dark shadow-sm" : "btn-outline-secondary")">
+                    @if (cat == "Photos") { <i class="fas fa-camera me-1"></i> }
+                    else if (cat == "Videos") { <i class="fas fa-video me-1"></i> }
+                    else if (cat == "Rooms") { <i class="fas fa-bed me-1"></i> }
+                    else if (cat == "Community") { <i class="fas fa-users me-1"></i> }
+                    else if (cat == "Events") { <i class="fas fa-music me-1"></i> }
+                    else if (cat == "Dining") { <i class="fas fa-utensils me-1"></i> }
+                    @cat
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Gallery Grid Section -->
+<section class="py-5 bg-light min-vh-100">
+    <div class="container py-3">
+        @if (Model != null && Model.Any())
+        {
+            <div class="row g-4" id="gallery-grid">
+                @foreach (var item in Model)
+                {
+                    var isVideo = item.MediaType == "Video";
+                    var previewImg = isVideo 
+                        ? (!string.IsNullOrEmpty(item.ThumbnailUrl) ? item.ThumbnailUrl : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800") 
+                        : item.MediaUrl;
+                    
+                    <div class="col-lg-4 col-md-6 col-sm-12 gallery-card-item">
+                        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 position-relative gallery-card-hover" 
+                             style="cursor: pointer; background: #fff; transition: transform 0.3s ease, shadow 0.3s ease;"
+                             onclick="openMediaModal('@item.Title', '@item.MediaUrl', '@item.MediaType', '@(item.Description ?? "")')">
+                            
+                            <!-- Thumbnail Wrapper -->
+                            <div class="position-relative overflow-hidden" style="height: 260px;">
+                                <img src="@previewImg" alt="@item.Title" class="w-100 h-100 object-fit-cover gallery-img-zoom" style="transition: transform 0.6s ease;" />
+                                
+                                <!-- Category Tag -->
+                                <span class="badge position-absolute top-0 start-0 m-3 px-3 py-2 rounded-pill shadow-sm" style="background: rgba(15, 23, 42, 0.85); color: #fff;">
+                                    @item.Category
+                                </span>
+
+                                <!-- Media Type Indicator / Play Icon -->
+                                @if (isVideo)
+                                {
+                                    <div class="position-absolute top-50 start-50 translate-middle rounded-circle d-flex align-items-center justify-content-center shadow-lg" 
+                                         style="width: 64px; height: 64px; background: rgba(220, 53, 69, 0.9); color: white;">
+                                        <i class="fas fa-play ms-1 fs-4"></i>
+                                    </div>
+                                    <span class="badge bg-danger position-absolute bottom-0 end-0 m-3 px-3 py-2 rounded-pill shadow-sm">
+                                        <i class="fas fa-video me-1"></i> Video Tour
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-dark position-absolute bottom-0 end-0 m-3 px-3 py-2 rounded-pill shadow-sm">
+                                        <i class="fas fa-expand-alt me-1"></i> View Full
+                                    </span>
+                                }
+                            </div>
+
+                            <!-- Card Body -->
+                            <div class="card-body p-4 d-flex flex-column justify-content-between">
+                                <div>
+                                    <h5 class="fw-bold text-dark mb-2">@item.Title</h5>
+                                    @if (!string.IsNullOrEmpty(item.Description))
+                                    {
+                                        <p class="text-muted small mb-0">@item.Description</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5 my-5">
+                <div class="mb-4">
+                    <i class="fas fa-camera-retro fa-4x text-muted opacity-50"></i>
+                </div>
+                <h4 class="fw-bold text-dark">No gallery items found for "@currentCategory"</h4>
+                <p class="text-muted">We are adding new photos and video walkthroughs soon.</p>
+                <a asp-action="Gallery" asp-route-category="All" class="btn btn-outline-dark rounded-pill px-4 mt-2">
+                    View All Categories
+                </a>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Media Lightbox Modal -->
+<div class="modal fade" id="mediaLightboxModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content bg-dark text-white rounded-4 overflow-hidden border-0 shadow-lg">
+            <div class="modal-header border-bottom border-secondary py-3 px-4">
+                <h5 class="modal-title fw-bold" id="lightboxTitle">Media Showcase</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" onclick="closeMediaModal()"></button>
+            </div>
+            <div class="modal-body p-0 text-center bg-black d-flex align-items-center justify-content-center" style="min-height: 480px;">
+                <div id="mediaContainer" class="w-100 h-100 d-flex align-items-center justify-content-center"></div>
+            </div>
+            <div class="modal-footer border-top border-secondary py-3 px-4 justify-content-between">
+                <p class="text-gray-300 mb-0 small" id="lightboxDescription"></p>
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal" onclick="closeMediaModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .gallery-card-hover:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12) !important;
+        }
+        .gallery-card-hover:hover .gallery-img-zoom {
+            transform: scale(1.08);
+        }
+    </style>
+    <script>
+        var lightboxModal;
+        $(document).ready(function() {
+            lightboxModal = new bootstrap.Modal(document.getElementById('mediaLightboxModal'));
+            
+            $('#mediaLightboxModal').on('hidden.bs.modal', function () {
+                $('#mediaContainer').empty();
+            });
+        });
+
+        function openMediaModal(title, url, type, description) {
+            $('#lightboxTitle').text(title);
+            $('#lightboxDescription').text(description || '');
+            var container = $('#mediaContainer');
+            container.empty();
+
+            if (type === 'Video') {
+                if (url.indexOf('youtube.com') !== -1 || url.indexOf('youtu.be') !== -1) {
+                    // Convert standard youtube link to embed if necessary
+                    var embedUrl = url;
+                    if (url.indexOf('watch?v=') !== -1) {
+                        embedUrl = url.replace('watch?v=', 'embed/');
+                    } else if (url.indexOf('youtu.be/') !== -1) {
+                        embedUrl = url.replace('youtu.be/', 'www.youtube.com/embed/');
+                    }
+                    container.html('<iframe src="' + embedUrl + '?autoplay=1" style="width: 100%; height: 560px; border: none;" allow="autoplay; encrypted-media" allowfullscreen></iframe>');
+                } else {
+                    container.html('<video src="' + url + '" controls autoplay style="max-width: 100%; max-height: 600px; width: 100%;"></video>');
+                }
+            } else {
+                container.html('<img src="' + url + '" alt="' + title + '" style="max-width: 100%; max-height: 75vh; object-fit: contain;" />');
+            }
+
+            lightboxModal.show();
+        }
+
+        function closeMediaModal() {
+            $('#mediaContainer').empty();
+        }
+    </script>
+}

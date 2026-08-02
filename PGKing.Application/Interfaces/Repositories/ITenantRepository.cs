@@ -8,5 +8,6 @@ namespace PGKing.Application.Interfaces.Repositories
     {
         Task<Tenant?> GetByEmailAsync(string email);
         Task<IEnumerable<Tenant>> GetByVendorIdAsync(int vendorId);
+        new Task<IEnumerable<Tenant>> GetAllAsync();
     }
 }

@@ -1,6 +1,23 @@
 @model PGKing.Application.Entities.Property
+@using PGKing.UI.Helpers
 @{
-    ViewData["Title"] = Model.Title + " - Property Details";
+    var locSlug = !string.IsNullOrEmpty(Model.LocationSlug) ? Model.LocationSlug : SeoHelper.GenerateLocationSlug(Model.Area, Model.CityName ?? Model.City?.Name);
+    var propSlug = !string.IsNullOrEmpty(Model.PropertySlug) ? Model.PropertySlug : SeoHelper.GenerateSlug(Model.Title);
+    var canonicalUrl = Model.CanonicalUrl ?? SeoHelper.GenerateCanonicalUrl(locSlug, propSlug);
+    var cityName = Model.CityName ?? Model.City?.Name ?? "Mumbai";
+    var areaName = !string.IsNullOrEmpty(Model.Area) ? Model.Area : cityName;
+
+    if (ViewData["Title"] == null)
+    {
+        ViewData["Title"] = $"{Model.Title} – PG in {areaName}, {cityName} | PgKing";
+    }
+    if (ViewData["MetaDescription"] == null)
+    {
+        ViewData["MetaDescription"] = $"Find {Model.Title} in {areaName}, {cityName}. Check rent, room details, facilities, photos, availability and contact information on PgKing.";
+    }
+    ViewData["MetaKeywords"] = $"{Model.Title}, pg in {areaName}, pg in {cityName}, co-living in {cityName}, pg rooms, rent pg, pg king";
+    ViewData["CanonicalUrl"] = canonicalUrl;
+
     var allImages = new List<string>();
     if (!string.IsNullOrEmpty(Model.ImageUrl)) allImages.Add(Model.ImageUrl);
     if (Model.Media != null) allImages.AddRange(Model.Media.Select(m => m.FilePath));
@@ -254,19 +271,79 @@
     }
 </style>
 
+<script type="application/ld+json">
+{
+  "@@context": "https://schema.org",
+  "@@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://pgking.in/"
+    },
+    {
+      "@@type": "ListItem",
+      "position": 2,
+      "name": "PG in @cityName",
+      "item": "https://pgking.in/pg-in-@(SeoHelper.GenerateSlug(cityName))"
+    },
+    @if (!string.IsNullOrEmpty(Model.Area))
+    {
+    <text>
+    {
+      "@@type": "ListItem",
+      "position": 3,
+      "name": "PG in @Model.Area",
+      "item": "https://pgking.in/pg-in-@(SeoHelper.GenerateSlug(Model.Area))-@(SeoHelper.GenerateSlug(cityName))"
+    },
+    </text>
+    }
+    {
+      "@@type": "ListItem",
+      "position": @(string.IsNullOrEmpty(Model.Area) ? 3 : 4),
+      "name": "@Model.Title",
+      "item": "@canonicalUrl"
+    }
+  ]
+}
+</script>
+
 <div class="container py-5 mt-5">
     <!-- Breadcrumb & Header -->
     <div class="mb-4 animate-ox">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-2">
                 <li class="breadcrumb-item"><a href="/">Home</a></li>
-                <li class="breadcrumb-item"><a href="/Home/Properties">Properties</a></li>
+                <li class="breadcrumb-item"><a href="/pg-in-@(SeoHelper.GenerateSlug(cityName))">PG in @cityName</a></li>
+                @if (!string.IsNullOrEmpty(Model.Area))
+                {
+                    <li class="breadcrumb-item"><a href="/pg-in-@(SeoHelper.GenerateSlug(Model.Area))-@(SeoHelper.GenerateSlug(cityName))">PG in @Model.Area</a></li>
+                }
                 <li class="breadcrumb-item active">@Model.Title</li>
             </ol>
         </nav>
         <div class="d-flex justify-content-between align-items-end">
             <div>
-                <h1 class="property-title mb-2">@Model.Title</h1>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    @if (Model.IsVerified)
+                    {
+                        <span class="badge bg-light text-primary border px-3 py-1 fw-bold small"><i class="fas fa-check-circle me-1"></i>VERIFIED</span>
+                    }
+                    @if ((!string.IsNullOrEmpty(Model.PgType) && Model.PgType.Contains("Boys")) || (Model.Title != null && Model.Title.Contains("Boys")))
+                    {
+                        <span class="badge bg-primary text-white rounded-pill px-3 py-1 font-sans fw-bold small"><i class="fas fa-mars me-1" aria-hidden="true"></i>Boys PG</span>
+                    }
+                    else if ((!string.IsNullOrEmpty(Model.PgType) && Model.PgType.Contains("Girls")) || (Model.Title != null && Model.Title.Contains("Girls")))
+                    {
+                        <span class="badge bg-danger text-white rounded-pill px-3 py-1 font-sans fw-bold small"><i class="fas fa-venus me-1" aria-hidden="true"></i>Girls PG</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success text-white rounded-pill px-3 py-1 font-sans fw-bold small"><i class="fas fa-users me-1" aria-hidden="true"></i>@(string.IsNullOrEmpty(Model.PgType) ? "Co-living" : Model.PgType)</span>
+                    }
+                </div>
+                <h1 class="property-title mb-2">@(ViewData["H1Title"] ?? $"{Model.Title} in {areaName}, {cityName}")</h1>
                 <p class="property-subtitle mb-0"><i class="fas fa-map-marker-alt me-2" style="color: var(--luxury-burgundy);"></i> @Model.Address, @Model.City?.Name</p>
             </div>
             <div class="d-none d-md-flex gap-2">
@@ -455,7 +532,6 @@
             </div>
 
             <!-- Map -->
-            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
             <div class="ox-card p-0 overflow-hidden border-0 shadow-sm animate-ox">
                 <div class="p-4 p-lg-5 pb-0">
                     <h4 class="ox-section-title">Location</h4>
@@ -569,62 +645,121 @@
 </style>
 
 @section Scripts {
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Google Maps API with Geocoding and Places libraries -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrbWFXlOYpaq51wteSyFS2UjdMPOWBlQw&libraries=places"></script>
     <script>
-        // Leaflet details map init
+        // Custom Marker class inheriting from OverlayView for custom HTML rendering
+        function CustomMarker(latlng, map, html, onClick) {
+            this.latlng_ = latlng;
+            this.html_ = html;
+            this.onClick_ = onClick;
+            this.div_ = null;
+            this.setMap(map);
+        }
+
+        if (typeof google !== 'undefined') {
+            CustomMarker.prototype = new google.maps.OverlayView();
+
+            CustomMarker.prototype.onAdd = function() {
+                var div = document.createElement('div');
+                div.style.position = 'absolute';
+                div.style.cursor = 'pointer';
+                div.className = 'custom-map-marker-wrapper';
+                div.innerHTML = this.html_;
+                
+                this.div_ = div;
+                
+                var panes = this.getPanes();
+                panes.overlayImage.appendChild(div);
+                
+                var self = this;
+                google.maps.event.addDomListener(div, "click", function(event) {
+                    if (self.onClick_) {
+                        self.onClick_();
+                    }
+                    google.maps.event.trigger(self, "click");
+                });
+            };
+
+            CustomMarker.prototype.draw = function() {
+                var overlayProjection = this.getProjection();
+                var position = overlayProjection.fromLatLngToDivPixel(this.latlng_);
+                
+                var div = this.div_;
+                if (div) {
+                    div.style.left = (position.x - 42) + 'px';
+                    div.style.top = (position.y - 15) + 'px';
+                }
+            };
+
+            CustomMarker.prototype.onRemove = function() {
+                if (this.div_) {
+                    this.div_.parentNode.removeChild(this.div_);
+                    this.div_ = null;
+                }
+            };
+        }
+
+        // Google Maps details map init
         document.addEventListener('DOMContentLoaded', () => {
-            var propertyLat = @(Model.Latitude ?? 28.5355);
-            var propertyLng = @(Model.Longitude ?? 77.3910);
-            
-            @if (!Model.Latitude.HasValue || !Model.Longitude.HasValue) {
-                @:if ("@Model.City?.Name" === "Mumbai") { propertyLat = 19.0760; propertyLng = 72.8777; }
-                @:else if ("@Model.City?.Name" === "Pune") { propertyLat = 18.5204; propertyLng = 73.8567; }
-                @:else if ("@Model.City?.Name" === "Bengaluru") { propertyLat = 12.9716; propertyLng = 77.5946; }
-                @:else if ("@Model.City?.Name" === "New Delhi") { propertyLat = 28.6139; propertyLng = 77.2090; }
-            }
+            var address = "@Html.Raw(Model.Address + ", " + (Model.City?.Name ?? "") + ", " + (Model.State?.Name ?? "") + ", India")";
+            var dbLat = @(Model.Latitude ?? 19.0760);
+            var dbLng = @(Model.Longitude ?? 72.8777);
 
-            if (document.getElementById('property-details-map')) {
-                var detailsMap = L.map('property-details-map', {
-                    zoomControl: false,
-                    attributionControl: false
+            var mapElement = document.getElementById('property-details-map');
+            if (mapElement && typeof google !== 'undefined') {
+                var map = new google.maps.Map(mapElement, {
+                    zoom: 16,
+                    center: { lat: dbLat, lng: dbLng },
+                    mapTypeId: google.maps.MapTypeId.ROADMAP,
+                    streetViewControl: true,
+                    mapTypeControl: true,
+                    fullscreenControl: true
                 });
 
-                L.control.zoom({ position: 'bottomright' }).addTo(detailsMap);
+                var geocoder = new google.maps.Geocoder();
+                var infowindow = new google.maps.InfoWindow();
 
-                // Load CartoDB Voyager tiles (clear and bright)
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 20
-                }).addTo(detailsMap);
+                geocoder.geocode({ 'address': address }, function(results, status) {
+                    var resolvedLatLng = new google.maps.LatLng(dbLat, dbLng);
 
-                detailsMap.setView([propertyLat, propertyLng], 15);
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        resolvedLatLng = results[0].geometry.location;
+                    }
 
-                var minRent = @(Model.Flats?.SelectMany(f => f.Rooms).Any() == true ? Model.Flats.SelectMany(f => f.Rooms).Min(r => r.Rent) : 0);
-                var displayPrice = minRent > 0 ? "₹" + minRent.toLocaleString('en-IN') : "Contact";
+                    map.setCenter(resolvedLatLng);
 
-                var markerHtml = '<div class="map-price-pin selected">' +
-                                    '<i class="fas fa-bed me-1"></i>' +
-                                    '<span>' + displayPrice + '</span>' +
-                                 '</div>';
-                
-                var customIcon = L.divIcon({
-                    html: markerHtml,
-                    className: 'custom-price-marker-wrapper',
-                    iconSize: [85, 30],
-                    iconAnchor: [42, 15]
+                    var minRent = @(Model.Flats?.SelectMany(f => f.Rooms).Any() == true ? Model.Flats.SelectMany(f => f.Rooms).Min(r => r.Rent) : 0);
+                    var displayPrice = minRent > 0 ? "₹" + minRent.toLocaleString('en-IN') : "Contact";
+
+                    var markerHtml = '<div class="map-price-pin selected">' +
+                                        '<i class="fas fa-bed me-1" aria-hidden="true"></i>' +
+                                        '<span>' + displayPrice + '</span>' +
+                                     '</div>';
+                    
+                    var customMarker = new CustomMarker(
+                        resolvedLatLng, 
+                        map, 
+                        markerHtml, 
+                        function() {
+                            showDetailsInfoWindow();
+                        }
+                    );
+
+                    function showDetailsInfoWindow() {
+                        var popupHtml = '<div class="map-tooltip-dark" style="font-family:\'Inter\', sans-serif; padding:4px; color:#111827;">' +
+                                            '<h6 style="margin:0 0 4px 0; font-weight:700;">@Html.Raw(Model.Title.Replace("\"", "\\\""))</h6>' +
+                                            '<p style="margin:0; font-size:0.75rem; color:#4B5563;">@Html.Raw(Model.Address.Replace("\"", "\\\""))</p>' +
+                                        '</div>';
+                        infowindow.setContent(popupHtml);
+                        infowindow.setPosition(resolvedLatLng);
+                        infowindow.setOptions({ pixelOffset: new google.maps.Size(0, -25) });
+                        infowindow.open(map);
+                    }
+
+                    // Open popup automatically on load
+                    showDetailsInfoWindow();
                 });
-
-                var marker = L.marker([propertyLat, propertyLng], { icon: customIcon }).addTo(detailsMap);
-                
-                var popupHtml = '<div class="map-tooltip-dark">' +
-                                    '<h6 class="mb-1 text-white fw-bold">@Html.Raw(Model.Title.Replace("\"", "\\\""))</h6>' +
-                                    '<p class="m-0 text-muted small" style="font-size: 0.72rem; max-width: 200px; white-space: normal;">@Html.Raw(Model.Address.Replace("\"", "\\\""))</p>' +
-                                '</div>';
-
-                marker.bindPopup(popupHtml, {
-                    closeButton: false,
-                    offset: L.point(0, -5),
-                    className: 'dark-theme-popup'
-                }).openPopup();
             }
         });
 

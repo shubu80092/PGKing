@@ -6,6 +6,18 @@
     var banners = ViewBag.Banners as List<Banner>;
     var properties = ViewBag.Properties as List<Property>;
 
+    // C# helper to generate clean, URL-safe SEO URL from a Property
+    string GetSeoUrl(PGKing.Application.Entities.Property property)
+    {
+        if (!string.IsNullOrEmpty(property.LocationSlug) && !string.IsNullOrEmpty(property.PropertySlug))
+        {
+            return $"/{property.LocationSlug}/{property.PropertySlug}";
+        }
+        var locSlug = PGKing.UI.Helpers.SeoHelper.GenerateLocationSlug(property.Area, property.City?.Name ?? property.CityName);
+        var propSlug = PGKing.UI.Helpers.SeoHelper.GenerateSlug(property.Title);
+        return $"/{locSlug}/{propSlug}";
+    }
+
     // Staggered image resolution from banners or defaults
     var mainHeroImg = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200";
     var leftHeroImg = "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600";
@@ -220,7 +232,7 @@
                                         <span class="stay-card-price-label">Starts from</span>
                                         <span class="stay-card-price">@(minRent > 0 ? "₹" + minRent.ToString("N0") : "Contact")</span>
                                     </div>
-                                    <a asp-action="PropertyDetails" asp-route-id="@property.Id" class="btn-luxury-link">
+                                    <a href="@GetSeoUrl(property)" class="btn-luxury-link">
                                         View Stay <i class="fas fa-arrow-right"></i>
                                     </a>
                                 </div>
@@ -287,14 +299,40 @@
                                           ? property.Flats.SelectMany(f => f.Rooms).Min(r => r.Rent) 
                                           : 0;
                             
-                            var displayImg = property.ImageUrl;
-                            if (string.IsNullOrEmpty(displayImg)) {
-                                displayImg = property.Media?.FirstOrDefault()?.FilePath 
-                                             ?? property.Flats?.SelectMany(f => f.Media).FirstOrDefault()?.FilePath;
+                            var cardImages = new List<string>();
+                            if (!string.IsNullOrEmpty(property.ImageUrl)) {
+                                cardImages.Add(property.ImageUrl);
                             }
-                            if (string.IsNullOrEmpty(displayImg)) {
-                                displayImg = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800";
+                            if (property.Media != null) {
+                                foreach (var m in property.Media) {
+                                    if (!string.IsNullOrEmpty(m.FilePath) && !cardImages.Contains(m.FilePath)) {
+                                        cardImages.Add(m.FilePath);
+                                    }
+                                }
                             }
+                            if (property.Flats != null) {
+                                foreach (var f in property.Flats) {
+                                    if (f.Media != null) {
+                                        foreach (var m in f.Media) {
+                                            if (!string.IsNullOrEmpty(m.FilePath) && !cardImages.Contains(m.FilePath)) {
+                                                cardImages.Add(m.FilePath);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            var backupImgs = new[] {
+                                "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800",
+                                "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
+                                "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800",
+                                "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800"
+                            };
+                            foreach (var bImg in backupImgs) {
+                                if (cardImages.Count < 3 && !cardImages.Contains(bImg)) {
+                                    cardImages.Add(bImg);
+                                }
+                            }
+                            var sliderId = property.Id.ToString();
 
                             var rating = 3.5 + (property.Id % 15) / 10.0;
                             var reviewsCount = 12 + (property.Id * 17) % 300;
@@ -315,17 +353,25 @@
 
                             <div class="explorer-list-card" id="explorer-card-@property.Id" data-id="@property.Id">
                                 <!-- Card Image slider wrapper -->
-                                <div class="explorer-card-img-wrapper">
-                                    <img src="@displayImg" class="explorer-card-img" alt="@property.Title">
+                                <div class="explorer-card-img-wrapper" data-slider-id="@sliderId" data-current-slide="0" data-total-slides="@cardImages.Count">
+                                    <div class="explorer-slider-track" id="slider-track-@sliderId" style="display: flex; width: 100%; height: 100%; transition: transform 0.4s ease-in-out;">
+                                        @foreach(var imgUrl in cardImages)
+                                        {
+                                            <div class="explorer-slide" style="flex: 0 0 100%; width: 100%; height: 100%;">
+                                                <img src="@imgUrl" class="explorer-card-img" alt="@property.Title" style="width: 100%; height: 100%; object-fit: cover;">
+                                            </div>
+                                        }
+                                    </div>
                                     <!-- Image slider indicators/dots -->
-                                    <div class="img-slider-dots">
-                                        <span class="dot active"></span>
-                                        <span class="dot"></span>
-                                        <span class="dot"></span>
+                                    <div class="img-slider-dots" id="slider-dots-@sliderId">
+                                        @for(int d = 0; d < cardImages.Count; d++)
+                                        {
+                                            <span class="dot @(d == 0 ? "active" : "")" onclick="event.stopPropagation(); slideExplorerImage('@sliderId', @d)"></span>
+                                        }
                                     </div>
                                     <!-- Image slider navigation arrows -->
-                                    <button class="img-slider-arrow prev" onclick="event.stopPropagation()"><i class="fas fa-chevron-left"></i></button>
-                                    <button class="img-slider-arrow next" onclick="event.stopPropagation()"><i class="fas fa-chevron-right"></i></button>
+                                    <button type="button" class="img-slider-arrow prev" onclick="event.stopPropagation(); navigateExplorerSlide('@sliderId', -1)"><i class="fas fa-chevron-left"></i></button>
+                                    <button type="button" class="img-slider-arrow next" onclick="event.stopPropagation(); navigateExplorerSlide('@sliderId', 1)"><i class="fas fa-chevron-right"></i></button>
                                 </div>
 
                                 <!-- Card Content -->
@@ -382,18 +428,38 @@
                             var rating = i == 1 ? "3.7" : i == 2 ? "3.6" : "3.4";
                             var reviews = i == 1 ? "279" : i == 2 ? "3.3K" : "5";
                             var desc = i == 1 ? "Humble lodging with a casual eatery." : i == 2 ? "Casual lodging offering free breakfast." : "Comfortable stays with professional service.";
-                            var img = i == 1 ? "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800" : i == 2 ? "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800" : "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800";
+                            var mockupImgs = i == 1 ? new[] {
+                                "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800",
+                                "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
+                                "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"
+                            } : i == 2 ? new[] {
+                                "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800",
+                                "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800",
+                                "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"
+                            } : new[] {
+                                "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
+                                "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800",
+                                "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800"
+                            };
 
                             <div class="explorer-list-card" id="explorer-card-mock-@i" data-id="mock-@i">
-                                <div class="explorer-card-img-wrapper">
-                                    <img src="@img" class="explorer-card-img" alt="@title">
-                                    <div class="img-slider-dots">
-                                        <span class="dot active"></span>
-                                        <span class="dot"></span>
-                                        <span class="dot"></span>
+                                <div class="explorer-card-img-wrapper" data-slider-id="mock-@i" data-current-slide="0" data-total-slides="3">
+                                    <div class="explorer-slider-track" id="slider-track-mock-@i" style="display: flex; width: 100%; height: 100%; transition: transform 0.4s ease-in-out;">
+                                        @foreach(var img in mockupImgs)
+                                        {
+                                            <div class="explorer-slide" style="flex: 0 0 100%; width: 100%; height: 100%;">
+                                                <img src="@img" class="explorer-card-img" alt="@title" style="width: 100%; height: 100%; object-fit: cover;">
+                                            </div>
+                                        }
                                     </div>
-                                    <button class="img-slider-arrow prev" onclick="event.stopPropagation()"><i class="fas fa-chevron-left"></i></button>
-                                    <button class="img-slider-arrow next" onclick="event.stopPropagation()"><i class="fas fa-chevron-right"></i></button>
+                                    <div class="img-slider-dots" id="slider-dots-mock-@i">
+                                        @for(int d = 0; d < 3; d++)
+                                        {
+                                            <span class="dot @(d == 0 ? "active" : "")" onclick="event.stopPropagation(); slideExplorerImage('mock-@i', @d)"></span>
+                                        }
+                                    </div>
+                                    <button type="button" class="img-slider-arrow prev" onclick="event.stopPropagation(); navigateExplorerSlide('mock-@i', -1)"><i class="fas fa-chevron-left"></i></button>
+                                    <button type="button" class="img-slider-arrow next" onclick="event.stopPropagation(); navigateExplorerSlide('mock-@i', 1)"><i class="fas fa-chevron-right"></i></button>
                                 </div>
                                 <div class="explorer-card-body">
                                     <div class="d-flex justify-content-between align-items-start mb-1">
@@ -440,6 +506,149 @@
     </div>
 </section>
 
+<!-- Gallery & Video Walkthroughs Showcase Section -->
+@if (ViewBag.GalleryItems != null && ((IEnumerable<GalleryItem>)ViewBag.GalleryItems).Any())
+{
+    var galleryList = ((IEnumerable<GalleryItem>)ViewBag.GalleryItems).ToList();
+    <section class="luxury-gallery-showcase py-5 bg-white">
+        <div class="container py-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-end mb-5">
+                <div>
+                    <span class="luxury-subtitle mb-2 d-block">Visual Tour</span>
+                    <h2 class="luxury-title-medium text-dark">Our Living Gallery & Video Tours</h2>
+                    <div class="mt-3" style="width: 50px; height: 1px; background: var(--luxury-burgundy);"></div>
+                </div>
+                <div class="mt-3 mt-md-0">
+                    <a asp-action="Gallery" asp-controller="Home" class="btn btn-outline-dark rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                        Explore Full Gallery <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                @foreach (var item in galleryList)
+                {
+                    var isVideo = item.MediaType == "Video";
+                    var previewImg = isVideo 
+                        ? (!string.IsNullOrEmpty(item.ThumbnailUrl) ? item.ThumbnailUrl : "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800") 
+                        : item.MediaUrl;
+
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 position-relative gallery-card-hover" 
+                             style="cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease;"
+                             onclick="window.location.href='@Url.Action("Gallery", "Home", new { category = item.Category })'">
+                            <div class="position-relative overflow-hidden" style="height: 250px;">
+                                <img src="@previewImg" alt="@item.Title" class="w-100 h-100 object-fit-cover" />
+                                <span class="badge position-absolute top-0 start-0 m-3 px-3 py-2 rounded-pill shadow-sm" style="background: rgba(15, 23, 42, 0.85); color: #fff;">
+                                    @item.Category
+                                </span>
+                                @if (isVideo)
+                                {
+                                    <div class="position-absolute top-50 start-50 translate-middle rounded-circle d-flex align-items-center justify-content-center shadow-lg" 
+                                         style="width: 54px; height: 54px; background: rgba(220, 53, 69, 0.9); color: white;">
+                                        <i class="fas fa-play ms-1 fs-5"></i>
+                                    </div>
+                                    <span class="badge bg-danger position-absolute bottom-0 end-0 m-3 px-3 py-2 rounded-pill shadow-sm">
+                                        <i class="fas fa-video me-1"></i> Video
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-dark position-absolute bottom-0 end-0 m-3 px-3 py-2 rounded-pill shadow-sm">
+                                        <i class="fas fa-camera me-1"></i> Photo
+                                    </span>
+                                }
+                            </div>
+                            <div class="card-body p-3">
+                                <h6 class="fw-bold text-dark mb-1 text-truncate">@item.Title</h6>
+                                @if (!string.IsNullOrEmpty(item.Description))
+                                {
+                                    <p class="text-muted small mb-0 text-truncate">@item.Description</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- Testimonials Section -->
+@if (ViewBag.Testimonials != null && ((IEnumerable<Testimonial>)ViewBag.Testimonials).Any())
+{
+    <section class="luxury-testimonials-section py-5 bg-light">
+        <div class="container py-5">
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <div class="text-start">
+                    <span class="luxury-subtitle mb-2 d-block">Client Stories</span>
+                    <h2 class="luxury-title-medium text-dark">What Our Residents Say</h2>
+                    <div class="mt-3" style="width: 50px; height: 1px; background: var(--luxury-burgundy);"></div>
+                </div>
+                <div class="d-flex gap-2 pb-2">
+                    <button class="btn btn-outline-dark rounded-circle btn-icon ts-prev-arrow" style="width: 45px; height: 45px;">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button class="btn btn-dark rounded-circle btn-icon ts-next-arrow" style="width: 45px; height: 45px;">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="testimonials-slider d-flex overflow-auto hide-scrollbar gap-4 pb-4" style="scroll-snap-type: x mandatory;">
+                @foreach (var testimonial in (IEnumerable<Testimonial>)ViewBag.Testimonials)
+                {
+                    <div class="testimonial-card flex-shrink-0" style="width: 380px; scroll-snap-align: start;">
+                        <div class="card h-100 border-0 shadow-sm rounded-4 p-4" style="background: white;">
+                            <div class="d-flex align-items-center mb-4">
+                                @if (!string.IsNullOrEmpty(testimonial.ImageUrl))
+                                {
+                                    <img src="@testimonial.ImageUrl" class="rounded-circle shadow-sm" style="width: 60px; height: 60px; object-fit: cover;" alt="@testimonial.Name">
+                                }
+                                else
+                                {
+                                    <div class="rounded-circle bg-primary-soft text-primary d-flex align-items-center justify-content-center shadow-sm fw-bold fs-4" style="width: 60px; height: 60px;">
+                                        @testimonial.Name.Substring(0, 1).ToUpper()
+                                    </div>
+                                }
+                                <div class="ms-3">
+                                    <h5 class="fw-bold mb-1 font-serif text-dark" style="font-size: 1.25rem;">@testimonial.Name</h5>
+                                    @if (!string.IsNullOrEmpty(testimonial.Designation))
+                                    {
+                                        <p class="text-muted small mb-0 font-sans">@testimonial.Designation</p>
+                                    }
+                                </div>
+                            </div>
+                            <div class="text-warning mb-3" style="font-size: 0.9rem;">
+                                @for (int i = 0; i < testimonial.Rating; i++)
+                                {
+                                    <i class="fas fa-star"></i>
+                                }
+                                @for (int i = testimonial.Rating; i < 5; i++)
+                                {
+                                    <i class="far fa-star text-muted"></i>
+                                }
+                            </div>
+                            @{
+                                var msg = testimonial.Message;
+                                var isLong = msg.Length > 150;
+                                var shortMsg = isLong ? msg.Substring(0, 150) + "..." : msg;
+                            }
+                            <p class="font-sans text-muted fw-light mb-0" style="font-size: 1.05rem; line-height: 1.7;">
+                                <span class="testimonial-text-short">"@shortMsg"</span>
+                                @if (isLong) {
+                                    <span class="testimonial-text-full d-none">"@msg"</span>
+                                    <a href="javascript:void(0)" class="text-primary fw-bold text-decoration-none read-more-btn ms-1" style="font-size: 0.9rem;">Read more</a>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
 <!-- Amenities & Features Section -->
 <section class="luxury-features-section py-5">
     <div class="container py-5">
@@ -485,6 +694,37 @@
 @section Scripts {
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
+        // Global Image slider functions for Interactive Map Directory
+        window.slideExplorerImage = function(id, index) {
+            var wrapper = document.querySelector('[data-slider-id="' + id + '"]');
+            if (!wrapper) return;
+            var total = parseInt(wrapper.getAttribute('data-total-slides')) || 1;
+            if (index < 0) index = total - 1;
+            if (index >= total) index = 0;
+            
+            wrapper.setAttribute('data-current-slide', index);
+            
+            var track = document.getElementById('slider-track-' + id);
+            if (track) {
+                track.style.transform = 'translateX(-' + (index * 100) + '%)';
+            }
+            
+            var dots = document.querySelectorAll('#slider-dots-' + id + ' .dot');
+            dots.forEach(function(dot, i) {
+                if (i === index) dot.classList.add('active');
+                else dot.classList.remove('active');
+            });
+        };
+
+        window.navigateExplorerSlide = function(id, direction) {
+            var wrapper = document.querySelector('[data-slider-id="' + id + '"]');
+            if (!wrapper) return;
+            var current = parseInt(wrapper.getAttribute('data-current-slide')) || 0;
+            var total = parseInt(wrapper.getAttribute('data-total-slides')) || 1;
+            var nextIndex = (current + direction + total) % total;
+            window.slideExplorerImage(id, nextIndex);
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             // 0. Hero Background Slideshow code
             const slides = document.querySelectorAll('.hero-slide');
@@ -513,6 +753,42 @@
                     slider.scrollBy({ left: cardWidth, behavior: 'smooth' });
                 });
             }
+
+            // 1.5 Testimonial slider code
+            const tsSlider = document.querySelector('.testimonials-slider');
+            const tsPrevBtn = document.querySelector('.ts-prev-arrow');
+            const tsNextBtn = document.querySelector('.ts-next-arrow');
+            
+            if (tsSlider && tsPrevBtn && tsNextBtn) {
+                tsPrevBtn.addEventListener('click', () => {
+                    const cardWidth = tsSlider.querySelector('.testimonial-card').offsetWidth + 24;
+                    tsSlider.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+                });
+                
+                tsNextBtn.addEventListener('click', () => {
+                    const cardWidth = tsSlider.querySelector('.testimonial-card').offsetWidth + 24;
+                    tsSlider.scrollBy({ left: cardWidth, behavior: 'smooth' });
+                });
+            }
+
+            // Testimonial Read More Logic
+            document.querySelectorAll('.read-more-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const parent = this.parentElement;
+                    const shortText = parent.querySelector('.testimonial-text-short');
+                    const fullText = parent.querySelector('.testimonial-text-full');
+                    
+                    if (fullText.classList.contains('d-none')) {
+                        fullText.classList.remove('d-none');
+                        shortText.classList.add('d-none');
+                        this.innerText = 'Read less';
+                    } else {
+                        fullText.classList.add('d-none');
+                        shortText.classList.remove('d-none');
+                        this.innerText = 'Read more';
+                    }
+                });
+            });
 
             // 2. Map Explorer script initialization
             var mapProperties = [];
@@ -555,7 +831,8 @@
                     @:    lng: @lng,
                     @:    price: @minRent,
                     @:    rating: @rating.ToString("F1"),
-                    @:    reviews: @reviewsCount
+                    @:    reviews: @reviewsCount,
+                    @:    slug: "@GetSeoUrl(property)"
                     @:});
                 }
             }
@@ -579,9 +856,10 @@
                 // Add zoom control at bottom right
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-                // Load CartoDB Voyager clear tiles
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 20
+                // Load Real Google Maps Street Tiles
+                L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                    maxZoom: 20,
+                    subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
                 }).addTo(map);
 
                 var markers = {};
@@ -654,10 +932,9 @@
                     markers[prop.id] = marker;
                     latlngs.push([prop.lat, prop.lng]);
 
-                    // Marker click handler (direct navigation for real properties, scroll-focus for mock properties)
                     marker.on('click', function() {
                         if (String(prop.id).indexOf('mock') === -1) {
-                            window.location.href = '/Home/PropertyDetails/' + prop.id;
+                            window.location.href = prop.slug;
                         } else {
                             highlightProperty(prop.id, true);
                         }
@@ -684,6 +961,24 @@
                 } else {
                     map.setView([28.5355, 77.3910], 13);
                 }
+
+                // Swipe support for touch devices
+                var touchStartX = 0;
+                var touchEndX = 0;
+                $('.explorer-card-img-wrapper').on('touchstart', function(e) {
+                    touchStartX = e.originalEvent.changedTouches[0].screenX;
+                }).on('touchend', function(e) {
+                    touchEndX = e.originalEvent.changedTouches[0].screenX;
+                    var diff = touchStartX - touchEndX;
+                    if (Math.abs(diff) > 30) {
+                        var id = $(this).attr('data-slider-id');
+                        if (diff > 0) {
+                            window.navigateExplorerSlide(id, 1);
+                        } else {
+                            window.navigateExplorerSlide(id, -1);
+                        }
+                    }
+                });
 
                 // Card click handler
                 $('.explorer-list-card').on('click', function() {

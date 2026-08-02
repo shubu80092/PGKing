@@ -19,10 +19,29 @@
                     
                     <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
-                    <div class="mb-3">
-                        <label asp-for="Title" class="form-label fw-semibold">Property Name</label>
-                        <input asp-for="Title" class="form-control rounded-3" required />
-                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Title" class="form-label fw-semibold">Property Name</label>
+                            <input asp-for="Title" class="form-control rounded-3" required />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="PgType" class="form-label fw-semibold">PG Type / Category</label>
+                            <select asp-for="PgType" class="form-select rounded-3" required>
+                                <option value="Co-living">Co-living (Unisex / Shared)</option>
+                                <option value="Boys PG">Boys PG</option>
+                                <option value="Girls PG">Girls PG</option>
+                            </select>
+                            <span asp-validation-for="PgType" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-2 mb-3 d-flex align-items-end">
+                            <div class="form-check form-switch mb-2">
+                                <input asp-for="IsVerified" class="form-check-input" type="checkbox" id="IsVerifiedSwitch" />
+                                <label class="form-check-label fw-semibold text-primary" for="IsVerifiedSwitch">
+                                    <i class="fas fa-check-circle me-1"></i>VERIFIED
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="row">
@@ -42,20 +61,32 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label asp-for="Address" class="form-label fw-semibold">Street Address / Area</label>
-                        <input asp-for="Address" class="form-control rounded-3" id="Address" required />
+                    <div class="mb-3 position-relative">
+                        <label asp-for="Address" class="form-label fw-semibold">
+                            Street Address / Area
+                            <span class="badge bg-light text-primary border ms-2 fw-normal"><i class="fas fa-map-marker-alt me-1"></i>Google Address Suggestions Enabled</span>
+                        </label>
+                        <div class="position-relative">
+                            <input asp-for="Address" class="form-control rounded-3" id="Address" placeholder="Start typing address (e.g. Vikhroli East, Mumbai)..." required autocomplete="off" />
+                            <div id="address-spinner" class="spinner-border spinner-border-sm text-primary position-absolute" style="right: 15px; top: 12px; display: none;" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div id="address-suggestions" class="list-group shadow-lg position-absolute w-100 rounded-3 overflow-hidden mt-1 border" style="z-index: 1050; max-height: 280px; overflow-y: auto; display: none;"></div>
+                        </div>
                         <span asp-validation-for="Address" class="text-danger small"></span>
+                        <div id="address-selection-info" class="text-success small mt-1" style="display: none;">
+                            <i class="fas fa-check-circle me-1"></i> Address selected & coordinates (Lat & Long) automatically updated!
+                        </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Latitude" class="form-label fw-semibold">Latitude (Optional)</label>
+                            <label asp-for="Latitude" class="form-label fw-semibold">Latitude</label>
                             <input asp-for="Latitude" type="number" step="any" class="form-control rounded-3" id="Latitude" placeholder="e.g. 28.5355" />
                             <span asp-validation-for="Latitude" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Longitude" class="form-label fw-semibold">Longitude (Optional)</label>
+                            <label asp-for="Longitude" class="form-label fw-semibold">Longitude</label>
                             <input asp-for="Longitude" type="number" step="any" class="form-control rounded-3" id="Longitude" placeholder="e.g. 77.3910" />
                             <span asp-validation-for="Longitude" class="text-danger small"></span>
                         </div>
@@ -141,7 +172,220 @@
                     });
                 } else { updateMap(); }
             });
-            $('#Address, #CityId, #StateId, #Latitude, #Longitude').on('change keyup', function() { updateMap(); });
+            $('#Address, #CityId, #StateId, #Latitude, #Longitude').on('input paste change keyup', function() {
+                setTimeout(function() { updateMap(false); }, 50);
+            });
+
+            // Address Autocomplete / Google Address Suggestions (Nominatim API + Photon Fallback + Smart Cleaners)
+            var suggestTimer = null;
+            $('#Address').on('input paste change keyup', function() {
+                var $el = $(this);
+                setTimeout(function() {
+                    var rawQuery = $el.val().trim();
+                    $('#address-selection-info').hide();
+                    
+                    if (rawQuery.length < 3) {
+                        $('#address-suggestions').hide().empty();
+                        $('#address-spinner').hide();
+                        return;
+                    }
+
+                    clearTimeout(suggestTimer);
+                    suggestTimer = setTimeout(function() {
+                        // 1. Clean Google Plus codes (e.g. '4WF8+6G9 ' or '7JFJ+2W, ') from address
+                        var cleaned = rawQuery.replace(/^[0-9A-Z]{2,8}\+[0-9A-Z]{2,5}\s*,?\s*/i, '').trim();
+                        if (!cleaned) cleaned = rawQuery;
+
+                        // 2. Build prioritized queries (Full address -> drop 1st specific building -> drop 2nd specific -> City/State)
+                        var queriesToTry = [cleaned];
+                        var parts = cleaned.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+                        if (parts.length >= 2) {
+                            queriesToTry.push(parts.slice(1).join(', '));
+                        }
+                        if (parts.length >= 3) {
+                            queriesToTry.push(parts.slice(2).join(', '));
+                        }
+                        if (parts.length >= 4) {
+                            queriesToTry.push(parts.slice(3).join(', '));
+                        }
+                        if (parts.length >= 5) {
+                            queriesToTry.push(parts.slice(parts.length - 3).join(', '));
+                        }
+                        var cityText = $('#CityId option:selected').text();
+                        var stateText = $('#StateId option:selected').text();
+                        if (cityText && cityText !== "Select City") {
+                            if (parts.length >= 2) {
+                                queriesToTry.push(parts[1] + ", " + cityText);
+                            }
+                            queriesToTry.push(cityText + (stateText && stateText !== "Select State" ? ", " + stateText : ""));
+                        }
+
+                        // Ensure unique queries
+                        var uniqueQueries = [];
+                        $.each(queriesToTry, function(i, qStr) {
+                            if (qStr && uniqueQueries.indexOf(qStr) === -1) {
+                                uniqueQueries.push(qStr);
+                            }
+                        });
+
+                        $('#address-spinner').show();
+                        tryGeocode(uniqueQueries, 0);
+                    }, 300);
+                }, 10);
+            });
+
+            function tryGeocode(queries, index) {
+                if (index >= queries.length) {
+                    // Fallback to Komoot Photon API if Nominatim returned 0 results for all variations
+                    tryPhotonFallback(queries[0]);
+                    return;
+                }
+
+                var qStr = queries[index];
+                var city = $('#CityId option:selected').text();
+                var state = $('#StateId option:selected').text();
+                if (city && city !== "Select City" && !qStr.toLowerCase().includes(city.toLowerCase())) {
+                    qStr += ", " + city;
+                }
+                if (state && state !== "Select State" && !qStr.toLowerCase().includes(state.toLowerCase())) {
+                    qStr += ", " + state;
+                }
+
+                $.ajax({
+                    url: 'https://nominatim.openstreetmap.org/search',
+                    data: {
+                        q: qStr,
+                        format: 'json',
+                        addressdetails: 1,
+                        limit: 6
+                    },
+                    headers: {
+                        'Accept-Language': 'en'
+                    },
+                    success: function(data) {
+                        if (data && data.length > 0) {
+                            $('#address-spinner').hide();
+                            displayGeocodeResults(data);
+                        } else {
+                            // Try next simplified query variation
+                            tryGeocode(queries, index + 1);
+                        }
+                    },
+                    error: function() {
+                        tryGeocode(queries, index + 1);
+                    }
+                });
+            }
+
+            function tryPhotonFallback(qStr) {
+                $.ajax({
+                    url: 'https://photon.komoot.io/api/',
+                    data: {
+                        q: qStr,
+                        limit: 5
+                    },
+                    success: function(res) {
+                        $('#address-spinner').hide();
+                        if (res && res.features && res.features.length > 0) {
+                            var mapped = [];
+                            $.each(res.features, function(i, f) {
+                                var props = f.properties || {};
+                                var coords = (f.geometry && f.geometry.coordinates) || [0, 0];
+                                var nameParts = [props.name, props.street, props.locality, props.city, props.state, props.postcode, props.country].filter(Boolean);
+                                mapped.push({
+                                    display_name: nameParts.join(', '),
+                                    lat: coords[1],
+                                    lon: coords[0]
+                                });
+                            });
+                            displayGeocodeResults(mapped);
+                        } else {
+                            $('#address-suggestions').hide().empty();
+                        }
+                    },
+                    error: function() {
+                        $('#address-spinner').hide();
+                        $('#address-suggestions').hide().empty();
+                    }
+                });
+            }
+
+            function displayGeocodeResults(data) {
+                var $list = $('#address-suggestions');
+                $list.empty();
+
+                if (data && data.length > 0) {
+                    var bestMatch = data[0];
+                    $('#Latitude').val(bestMatch.lat);
+                    $('#Longitude').val(bestMatch.lon);
+                    $('#address-selection-info').fadeIn();
+                    updateMap(false);
+
+                    $.each(data, function(index, item) {
+                        var displayName = item.display_name;
+                        var lat = item.lat;
+                        var lon = item.lon;
+                        
+                        var $item = $('<a href="javascript:void(0)" class="list-group-item list-group-item-action p-3 border-bottom d-flex align-items-start text-decoration-none"></a>');
+                        $item.html(`
+                            <div class="me-3 mt-1">
+                                <div class="bg-light text-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold text-dark small mb-1">${displayName}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">
+                                    <span class="badge bg-light text-secondary border me-1">Lat: ${lat}</span>
+                                    <span class="badge bg-light text-secondary border">Long: ${lon}</span>
+                                </div>
+                            </div>
+                        `);
+                        
+                        $item.on('click', function(e) {
+                            e.preventDefault();
+                            $('#Address').val(displayName);
+                            $('#Latitude').val(lat);
+                            $('#Longitude').val(lon);
+                            $list.hide();
+                            $('#address-selection-info').fadeIn();
+                            updateMap(false);
+                        });
+                        
+                        $list.append($item);
+                    });
+                    $list.show();
+                } else {
+                    $list.hide();
+                }
+            }
+
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#Address, #address-suggestions').length) {
+                    $('#address-suggestions').hide();
+                }
+            });
+
+            if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+                try {
+                    var input = document.getElementById('Address');
+                    var autocomplete = new google.maps.places.Autocomplete(input);
+                    window.googleAddressAutocompleteActive = true;
+                    autocomplete.addListener('place_changed', function() {
+                        var place = autocomplete.getPlace();
+                        if (place.geometry && place.geometry.location) {
+                            var lat = place.geometry.location.lat();
+                            var lng = place.geometry.location.lng();
+                            $('#Latitude').val(lat);
+                            $('#Longitude').val(lng);
+                            $('#address-selection-info').fadeIn();
+                            updateMap(false);
+                        }
+                    });
+                } catch (err) {
+                    console.error('Google Autocomplete init error:', err);
+                }
+            }
             
             $('form').submit(function() {
                 var selected = [];
@@ -151,7 +395,7 @@
                 $('#AmenitiesHidden').val(selected.join(','));
             });
 
-            function updateMap() {
+            function updateMap(useAddressOnly) {
                 var lat = $('#Latitude').val();
                 var lng = $('#Longitude').val();
                 var address = $('#Address').val();
@@ -159,10 +403,14 @@
                 var state = $('#StateId option:selected').text();
                 
                 var query = "";
-                if (lat && lng) {
+                if (!useAddressOnly && lat && lng) {
                     query = lat + "," + lng;
-                } else if (address && city !== "Select City" && state !== "Select State") {
-                    query = address + ", " + city + ", " + state;
+                } else if (address) {
+                    query = address;
+                    if (city && city !== "Select City") query += ", " + city;
+                    if (state && state !== "Select State") query += ", " + state;
+                } else if (lat && lng) {
+                    query = lat + "," + lng;
                 }
 
                 if (query) {

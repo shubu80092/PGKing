@@ -1,8 +1,8 @@
 # PowerShell script to build and push Docker image to GitHub Container Registry (GHCR)
 
 # Configuration - Customize these values
-$GithubOwner = "shubu80092/PGKing"
-$ImageName = "shubu80092/pgking"
+$GithubOwner = "shubu80092"
+$ImageName = "pgking"
 $Tag = "latest"
 $LoginUsername = "shubu80092"
 

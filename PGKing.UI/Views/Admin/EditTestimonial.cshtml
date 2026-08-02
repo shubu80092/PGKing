@@ -1,0 +1,86 @@
+@model PGKing.Application.Entities.Testimonial
+@{
+    ViewData["Title"] = "Edit Testimonial";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid p-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold mb-1">Edit Testimonial</h2>
+                    <p class="text-muted mb-0">Update client review details.</p>
+                </div>
+                <a asp-action="Testimonials" class="btn btn-light rounded-pill px-4 shadow-sm border">
+                    <i class="fas fa-arrow-left me-2"></i> Back to List
+                </a>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 p-lg-5">
+                    <form asp-action="EditTestimonial" method="post" enctype="multipart/form-data">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="ImageUrl" />
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label asp-for="Name" class="form-label fw-bold">Client Name <span class="text-danger">*</span></label>
+                                <input asp-for="Name" class="form-control form-control-lg bg-light border-0" required>
+                                <span asp-validation-for="Name" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Designation" class="form-label fw-bold">Designation/Role</label>
+                                <input asp-for="Designation" class="form-control form-control-lg bg-light border-0">
+                                <span asp-validation-for="Designation" class="text-danger small"></span>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label asp-for="Rating" class="form-label fw-bold">Rating (1-5) <span class="text-danger">*</span></label>
+                                <input asp-for="Rating" type="number" min="1" max="5" class="form-control form-control-lg bg-light border-0" required>
+                                <span asp-validation-for="Rating" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Client Image (Optional)</label>
+                                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                                {
+                                    <div class="mb-2">
+                                        <img src="@Model.ImageUrl" class="rounded-circle border" style="width: 50px; height: 50px; object-fit: cover;">
+                                    </div>
+                                }
+                                <input type="file" name="imageFile" class="form-control form-control-lg bg-light border-0" accept="image/*">
+                                <small class="text-muted">Leave empty to keep existing image</small>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Message" class="form-label fw-bold">Review Message <span class="text-danger">*</span></label>
+                                <textarea asp-for="Message" class="form-control bg-light border-0" rows="5" required></textarea>
+                                <span asp-validation-for="Message" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="DisplayOrder" class="form-label fw-bold">Display Order</label>
+                                <input asp-for="DisplayOrder" type="number" class="form-control form-control-lg bg-light border-0">
+                            </div>
+
+                            <div class="col-md-6 d-flex align-items-center">
+                                <div class="form-check form-switch mt-4">
+                                    <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch">
+                                    <label class="form-check-label fw-bold ms-2" asp-for="IsActive">Publish active</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-5 opacity-10">
+
+                        <div class="d-flex justify-content-end gap-3">
+                            <a asp-action="Testimonials" class="btn btn-light rounded-pill px-4">Cancel</a>
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

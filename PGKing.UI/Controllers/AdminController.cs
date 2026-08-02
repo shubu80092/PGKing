@@ -6,6 +6,7 @@ using PGKing.Application.Entities;
 using PGKing.Infrastructure.Data;
 using System.IO;
 using PGKing.UI.Services;
+using PGKing.UI.Helpers;
 
 namespace PGKing.UI.Controllers
 {
@@ -125,6 +126,34 @@ namespace PGKing.UI.Controllers
                 })
                 .ToListAsync();
             ViewBag.PropertyBedStats = propertyBedStats;
+            ViewBag.PropertyLabelsJson = System.Text.Json.JsonSerializer.Serialize(propertyBedStats.Select(p => p.PropertyName));
+            ViewBag.PropertyTotalBedsJson = System.Text.Json.JsonSerializer.Serialize(propertyBedStats.Select(p => p.TotalBeds));
+            ViewBag.PropertyOccupiedBedsJson = System.Text.Json.JsonSerializer.Serialize(propertyBedStats.Select(p => p.OccupiedBeds));
+
+            // 7-day booking trends
+            var last7Days = DateTime.Now.Date.AddDays(-6); // Include today + 6 previous days
+            var trendQuery = _context.Bookings.AsQueryable();
+            if (vendorId.HasValue)
+            {
+                trendQuery = trendQuery.Where(b => b.Property.VendorId == vendorId.Value);
+            }
+            var bookingTrends = await trendQuery
+                .Where(b => b.CreatedAt >= last7Days)
+                .GroupBy(b => b.CreatedAt.Date)
+                .Select(g => new { Date = g.Key, Count = g.Count() })
+                .ToListAsync();
+            
+            var trendLabels = new List<string>();
+            var trendData = new List<int>();
+            for (int i = 6; i >= 0; i--)
+            {
+                var d = DateTime.Now.Date.AddDays(-i);
+                trendLabels.Add(d.ToString("MMM dd"));
+                var count = bookingTrends.FirstOrDefault(b => b.Date == d)?.Count ?? 0;
+                trendData.Add(count);
+            }
+            ViewBag.TrendLabelsJson = System.Text.Json.JsonSerializer.Serialize(trendLabels);
+            ViewBag.TrendDataJson = System.Text.Json.JsonSerializer.Serialize(trendData);
             
             // Recent bookings
             var rBookingsQuery = _context.Bookings.AsQueryable();
@@ -190,8 +219,25 @@ namespace PGKing.UI.Controllers
                     // Assign property to the logged-in Vendor
                     property.VendorId = GetVendorId();
 
+                    if (string.IsNullOrEmpty(property.Area)) property.Area = "Mumbai";
+                    if (string.IsNullOrEmpty(property.CityName))
+                    {
+                        var cityObj = await _context.Cities.FindAsync(property.CityId);
+                        property.CityName = cityObj?.Name ?? "Mumbai";
+                    }
+                    if (string.IsNullOrEmpty(property.StateName))
+                    {
+                        var stateObj = await _context.States.FindAsync(property.StateId);
+                        property.StateName = stateObj?.Name ?? "Maharashtra";
+                    }
+
+                    property.LocationSlug = SeoHelper.GenerateLocationSlug(property.Area, property.CityName);
+                    property.PropertySlug = await SeoHelper.GenerateUniquePropertySlugAsync(_context, property.Title, property.LocationSlug);
+                    property.CanonicalUrl = SeoHelper.GenerateCanonicalUrl(property.LocationSlug, property.PropertySlug);
+
                     _context.Properties.Add(property);
                     await _context.SaveChangesAsync();
+                    await SeoHelper.UpdateXmlSitemapAsync(_context, Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"));
                     return RedirectToAction(nameof(ManageProperty), new { id = property.Id });
                 }
                 catch (Exception ex)
@@ -250,9 +296,42 @@ namespace PGKing.UI.Controllers
                     }
 
                     property.VendorId = existingProperty.VendorId; // Retain ownership
+                    property.CreatedAt = existingProperty.CreatedAt;
+
+                    if (string.IsNullOrEmpty(property.Area)) property.Area = existingProperty.Area ?? "Mumbai";
+                    if (string.IsNullOrEmpty(property.CityName))
+                    {
+                        var cityObj = await _context.Cities.FindAsync(property.CityId);
+                        property.CityName = cityObj?.Name ?? existingProperty.CityName ?? "Mumbai";
+                    }
+                    if (string.IsNullOrEmpty(property.StateName))
+                    {
+                        var stateObj = await _context.States.FindAsync(property.StateId);
+                        property.StateName = stateObj?.Name ?? existingProperty.StateName ?? "Maharashtra";
+                    }
+
+                    bool locationOrTitleChanged = existingProperty.Area != property.Area ||
+                                                  existingProperty.CityName != property.CityName ||
+                                                  existingProperty.Title != property.Title ||
+                                                  string.IsNullOrEmpty(existingProperty.PropertySlug) ||
+                                                  string.IsNullOrEmpty(existingProperty.LocationSlug);
+
+                    if (locationOrTitleChanged)
+                    {
+                        property.LocationSlug = SeoHelper.GenerateLocationSlug(property.Area, property.CityName);
+                        property.PropertySlug = await SeoHelper.GenerateUniquePropertySlugAsync(_context, property.Title, property.LocationSlug, existingProperty.Id);
+                        property.CanonicalUrl = SeoHelper.GenerateCanonicalUrl(property.LocationSlug, property.PropertySlug);
+                    }
+                    else
+                    {
+                        property.LocationSlug = existingProperty.LocationSlug;
+                        property.PropertySlug = existingProperty.PropertySlug;
+                        property.CanonicalUrl = existingProperty.CanonicalUrl;
+                    }
 
                     _context.Properties.Update(property);
                     await _context.SaveChangesAsync();
+                    await SeoHelper.UpdateXmlSitemapAsync(_context, Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"));
                     return RedirectToAction(nameof(Properties));
                 }
                 catch (Exception ex)
@@ -1119,6 +1198,86 @@ namespace PGKing.UI.Controllers
         }
         #endregion
 
+        #region Testimonials
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> Testimonials()
+        {
+            var testimonials = await _context.Testimonials.OrderBy(t => t.DisplayOrder).ToListAsync();
+            return View(testimonials);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
+        public IActionResult CreateTestimonial()
+        {
+            return View(new Testimonial());
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateTestimonial(Testimonial testimonial, IFormFile? imageFile)
+        {
+            if (ModelState.IsValid)
+            {
+                if (imageFile != null)
+                {
+                    testimonial.ImageUrl = await _storageService.SaveFileAsync(imageFile, "testimonials");
+                }
+                _context.Testimonials.Add(testimonial);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Testimonials));
+            }
+            return View(testimonial);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> EditTestimonial(int id)
+        {
+            var testimonial = await _context.Testimonials.FindAsync(id);
+            if (testimonial == null) return NotFound();
+            return View(testimonial);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditTestimonial(Testimonial testimonial, IFormFile? imageFile)
+        {
+            if (ModelState.IsValid)
+            {
+                if (imageFile != null)
+                {
+                    if (!string.IsNullOrEmpty(testimonial.ImageUrl))
+                        await _storageService.DeleteFileAsync(testimonial.ImageUrl);
+                    testimonial.ImageUrl = await _storageService.SaveFileAsync(imageFile, "testimonials");
+                }
+                _context.Testimonials.Update(testimonial);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Testimonials));
+            }
+            return View(testimonial);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteTestimonial(int id)
+        {
+            var testimonial = await _context.Testimonials.FindAsync(id);
+            if (testimonial != null)
+            {
+                if (!string.IsNullOrEmpty(testimonial.ImageUrl))
+                    await _storageService.DeleteFileAsync(testimonial.ImageUrl);
+                _context.Testimonials.Remove(testimonial);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Testimonials));
+        }
+        #endregion
+
         #region ContactInquiries
         [HttpGet]
         [Authorize(Roles = "SuperAdmin")]
@@ -1160,6 +1319,122 @@ namespace PGKing.UI.Controllers
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(ContactInquiries));
+        }
+        #endregion
+
+        #region Gallery Management
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> Gallery()
+        {
+            var items = await _context.GalleryItems
+                .OrderBy(g => g.DisplayOrder)
+                .ThenByDescending(g => g.Id)
+                .ToListAsync();
+            return View(items);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
+        public IActionResult CreateGallery()
+        {
+            return View(new GalleryItem { DisplayOrder = 1, IsActive = true, MediaType = "Photo", Category = "Rooms" });
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> CreateGallery(GalleryItem model, IFormFile? mediaFile, IFormFile? thumbnailFile)
+        {
+            ModelState.Remove("MediaUrl");
+            ModelState.Remove("ThumbnailUrl");
+
+            if (mediaFile != null)
+            {
+                model.MediaUrl = await _storageService.SaveFileAsync(mediaFile, "gallery");
+            }
+
+            if (thumbnailFile != null)
+            {
+                model.ThumbnailUrl = await _storageService.SaveFileAsync(thumbnailFile, "gallery");
+            }
+
+            if (string.IsNullOrEmpty(model.MediaUrl))
+            {
+                ModelState.AddModelError("MediaUrl", "Please upload a media file or provide a valid URL.");
+            }
+
+            if (ModelState.IsValid)
+            {
+                model.CreatedAt = DateTime.UtcNow;
+                _context.GalleryItems.Add(model);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Gallery));
+            }
+
+            return View(model);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> EditGallery(int id)
+        {
+            var item = await _context.GalleryItems.FindAsync(id);
+            if (item == null) return NotFound();
+            return View(item);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> EditGallery(GalleryItem model, IFormFile? mediaFile, IFormFile? thumbnailFile)
+        {
+            ModelState.Remove("MediaUrl");
+            ModelState.Remove("ThumbnailUrl");
+
+            if (!ModelState.IsValid) return View(model);
+
+            var existing = await _context.GalleryItems.FindAsync(model.Id);
+            if (existing == null) return NotFound();
+
+            existing.Title = model.Title;
+            existing.Description = model.Description;
+            existing.MediaType = model.MediaType;
+            existing.Category = model.Category;
+            existing.DisplayOrder = model.DisplayOrder;
+            existing.IsActive = model.IsActive;
+
+            if (mediaFile != null)
+            {
+                existing.MediaUrl = await _storageService.SaveFileAsync(mediaFile, "gallery");
+            }
+            else if (!string.IsNullOrEmpty(model.MediaUrl))
+            {
+                existing.MediaUrl = model.MediaUrl;
+            }
+
+            if (thumbnailFile != null)
+            {
+                existing.ThumbnailUrl = await _storageService.SaveFileAsync(thumbnailFile, "gallery");
+            }
+            else if (model.ThumbnailUrl != null)
+            {
+                existing.ThumbnailUrl = model.ThumbnailUrl;
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Gallery));
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> DeleteGallery(int id)
+        {
+            var item = await _context.GalleryItems.FindAsync(id);
+            if (item != null)
+            {
+                _context.GalleryItems.Remove(item);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Gallery));
         }
         #endregion
 

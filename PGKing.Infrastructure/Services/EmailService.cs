@@ -23,7 +23,7 @@ namespace PGKing.Infrastructure.Services
         {
             var server = _configuration["SmtpSettings:Server"];
             var portStr = _configuration["SmtpSettings:Port"];
-            var senderEmail = _configuration["SmtpSettings:SenderEmail"] ?? "info@pgking.in";
+            var senderEmail = _configuration["SmtpSettings:SenderEmail"] ?? "pgkingmumbai@pgking.in";
             var senderName = _configuration["SmtpSettings:SenderName"] ?? "PGKing Admin";
             var username = _configuration["SmtpSettings:Username"];
             var password = _configuration["SmtpSettings:Password"];

@@ -5,9 +5,9 @@
 
 <section class="section-padding bg-light" style="padding-top: 150px; padding-bottom: 80px;">
     <div class="container text-center">
-        <h6 class="text-primary fw-bold text-uppercase mb-2" style="letter-spacing: 3px;">The Minds Behind PGKing</h6>
-        <h1 class="display-3 fw-bold mb-4">Meet Our <span class="text-gradient">Team</span></h1>
-        <p class="fs-5 text-muted mx-auto" style="max-width: 600px; line-height: 1.8;">
+        <span class="luxury-subtitle d-block mb-3">The Minds Behind PGKing</span>
+        <h1 class="luxury-title-medium text-dark mb-4">Meet Our <span class="text-gradient">Team</span></h1>
+        <p class="font-sans fs-5 text-muted mx-auto fw-light" style="max-width: 600px; line-height: 1.8;">
             A passionate group of hospitality, operations, and technology professionals dedicated to building the future of residential co-living.
         </p>
     </div>
@@ -21,11 +21,13 @@
                 foreach (var item in Model)
                 {
                     <div class="col-lg-4 col-md-6">
-                        <div class="ox-card p-0 border-0 shadow-sm overflow-hidden h-100 text-center team-card">
-                            <div class="position-relative overflow-hidden" style="height: 320px;">
-                                <img src="@item.ImageUrl" class="w-100 h-100" style="object-fit: cover; transition: transform 0.5s ease;" alt="@item.Name - @item.Designation">
+                        <div class="ox-card p-0 border-0 shadow-sm h-100 text-center team-card rounded-4 bg-white" style="transition: transform 0.3s ease;">
+                            <div class="pt-5 pb-4 rounded-top-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                                <div class="position-relative mx-auto overflow-hidden bg-white" style="width: 180px; height: 180px; border-radius: 50%; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 4px solid #fff;">
+                                    <img src="@item.ImageUrl" class="w-100 h-100" style="object-fit: cover; object-position: center 15%; transition: transform 0.5s ease;" alt="@item.Name - @item.Designation">
+                                </div>
                             </div>
-                            <div class="p-4">
+                            <div class="px-4 pb-4 pt-4">
                                 <h4 class="fw-bold mb-1">@item.Name</h4>
                                 <p class="text-primary small fw-semibold text-uppercase mb-3" style="letter-spacing: 1px;">@item.Designation</p>
                                 <p class="text-muted small mb-4">@item.Bio</p>

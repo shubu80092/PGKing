@@ -16,7 +16,8 @@ namespace PGKing.Application.Mappings
             CreateMap<TenantCreateDto, Tenant>();
             CreateMap<TenantUpdateDto, Tenant>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-            CreateMap<Tenant, TenantResponseDto>();
+            CreateMap<Tenant, TenantResponseDto>()
+                .ForMember(dest => dest.VendorName, opt => opt.MapFrom(src => src.Vendor != null ? src.Vendor.ContactPerson : string.Empty));
         }
     }
 }
