@@ -161,6 +161,7 @@ namespace PGKing.UI.Helpers
                 {
                     var locSlug = !string.IsNullOrEmpty(property.LocationSlug) ? property.LocationSlug : GenerateLocationSlug(property.Area, property.CityName ?? property.City?.Name);
                     var propSlug = !string.IsNullOrEmpty(property.PropertySlug) ? property.PropertySlug : GenerateSlug(property.Title);
+                    if (propSlug.StartsWith("pg-")) propSlug = propSlug.Substring(3);
                     var canonicalUrl = property.CanonicalUrl ?? GenerateCanonicalUrl(locSlug, propSlug);
 
                     sb.AppendLine("  <url>");

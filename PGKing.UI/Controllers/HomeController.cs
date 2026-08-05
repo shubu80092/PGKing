@@ -119,6 +119,7 @@ namespace PGKing.UI.Controllers
 
             var locSlug = !string.IsNullOrEmpty(property.LocationSlug) ? property.LocationSlug : SeoHelper.GenerateLocationSlug(property.Area, property.CityName ?? property.City?.Name);
             var propSlug = !string.IsNullOrEmpty(property.PropertySlug) ? property.PropertySlug : SeoHelper.GenerateSlug(property.Title);
+            if (propSlug.StartsWith("pg-")) propSlug = propSlug.Substring(3);
 
             return RedirectPermanent($"/{locSlug}/{propSlug}");
         }
@@ -176,7 +177,7 @@ namespace PGKing.UI.Controllers
                     .ThenInclude(f => f.Rooms)
                 .Include(p => p.Flats)
                     .ThenInclude(f => f.Media)
-                .FirstOrDefaultAsync(p => p.LocationSlug == locationSlug && p.PropertySlug == propertySlug);
+                .FirstOrDefaultAsync(p => p.LocationSlug == locationSlug && (p.PropertySlug == propertySlug || p.PropertySlug == "pg-" + propertySlug));
 
             if (property == null)
             {
@@ -189,25 +190,36 @@ namespace PGKing.UI.Controllers
                         .ThenInclude(f => f.Rooms)
                     .Include(p => p.Flats)
                         .ThenInclude(f => f.Media)
-                    .FirstOrDefaultAsync(p => p.PropertySlug == propertySlug);
+                    .FirstOrDefaultAsync(p => p.PropertySlug == propertySlug || p.PropertySlug == "pg-" + propertySlug);
 
                 if (property == null) return NotFound();
 
                 // 301 permanent redirect to correct canonical locationSlug
                 var correctLocSlug = !string.IsNullOrEmpty(property.LocationSlug) ? property.LocationSlug : SeoHelper.GenerateLocationSlug(property.Area, property.CityName ?? property.City?.Name);
                 var correctPropSlug = !string.IsNullOrEmpty(property.PropertySlug) ? property.PropertySlug : SeoHelper.GenerateSlug(property.Title);
+                if (correctPropSlug.StartsWith("pg-")) correctPropSlug = correctPropSlug.Substring(3);
                 return RedirectPermanent($"/{correctLocSlug}/{correctPropSlug}");
             }
 
             var locSlug = !string.IsNullOrEmpty(property.LocationSlug) ? property.LocationSlug : SeoHelper.GenerateLocationSlug(property.Area, property.CityName ?? property.City?.Name);
             var propSlug = !string.IsNullOrEmpty(property.PropertySlug) ? property.PropertySlug : SeoHelper.GenerateSlug(property.Title);
+            if (propSlug.StartsWith("pg-")) propSlug = propSlug.Substring(3);
 
             ViewData["CanonicalUrl"] = property.CanonicalUrl ?? SeoHelper.GenerateCanonicalUrl(locSlug, propSlug);
             var cityName = property.CityName ?? property.City?.Name ?? "Mumbai";
             var areaName = !string.IsNullOrEmpty(property.Area) ? property.Area : cityName;
 
-            ViewData["Title"] = $"{property.Title} – PG in {areaName}, {cityName} | PgKing";
-            ViewData["MetaDescription"] = $"Find {property.Title} in {areaName}, {cityName}. Check rent, room details, facilities, photos, availability and contact information on PgKing.";
+            string locText = locSlug.Replace("-", " ");
+            locText = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(locText.ToLower());
+            if (locText.StartsWith("Pg ")) locText = "PG " + locText.Substring(3);
+            locText = locText.Replace(" In ", " in ");
+
+            var cleanTitle = property.Title.EndsWith(" PG", StringComparison.OrdinalIgnoreCase) ? property.Title.Substring(0, property.Title.Length - 3).Trim() : property.Title;
+
+            ViewData["Title"] = $"{property.Title} {locText} | Rent & Rooms | PgKing";
+            ViewData["MetaDescription"] = $"Find {property.Title} {locText}. Check PG rent, room options, amenities, photos, availability and contact details on PgKing.";
+            ViewData["MetaKeywords"] = $"{cleanTitle} PG {areaName} {cityName}, {locText}, PG rooms in {areaName}, paying guest in {areaName}, PG rent in {cityName}, PgKing";
+
             ViewData["H1Title"] = $"{property.Title} in {areaName}, {cityName}";
 
             ViewBag.Error = error;
@@ -224,6 +236,7 @@ namespace PGKing.UI.Controllers
                 {
                     var locSlug = !string.IsNullOrEmpty(property.LocationSlug) ? property.LocationSlug : SeoHelper.GenerateLocationSlug(property.Area, property.CityName ?? property.City?.Name);
                     var propSlug = !string.IsNullOrEmpty(property.PropertySlug) ? property.PropertySlug : SeoHelper.GenerateSlug(property.Title);
+                    if (propSlug.StartsWith("pg-")) propSlug = propSlug.Substring(3);
                     return RedirectPermanent($"/{locSlug}/{propSlug}");
                 }
             }

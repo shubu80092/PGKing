@@ -283,7 +283,7 @@ app.MapControllerRoute(
     defaults: new { controller = "Home", action = "LocationPropertiesSeo" })
     .WithStaticAssets();
 
-// New SEO Property Details route: e.g. /pg-in-bhandup-west-mumbai/pg-janteswar-society
+// New SEO Property Details route: e.g. /pg-in-bhandup-west-mumbai/janteswar-society
 app.MapControllerRoute(
     name: "propertyDetailsSeo",
     pattern: "{locationSlug:regex(^pg-in-.*)}/{propertySlug}",
